@@ -1,0 +1,39 @@
+{
+	"author": "rongpengli",
+	"chrome_url_overrides": {
+		"newtab": "html/index.html"
+	},
+	"chrome_url_overrides": {
+		"newtab": "html/index.html"
+	},
+	"name": "NewTab",
+	"description": "Enhance your new tab experience with a comfortable design and customizable links. Sincere thanks to sakuyaa for sharing codes of Firefox at https://github.com/sakuyaa/myNewTabWE.",
+	"icons": {
+		"16": "image/logo.png",
+		"48": "image/logo.png",
+		"128": "image/logo.png"
+	},
+	"manifest_version": 3,
+	"name": "myNewTab WE",
+	"options_ui": {
+		"browser_style": false,
+		"open_in_tab": true,
+		"page": "html/options.html"
+	},
+	"permissions": [
+		"downloads",
+		"notifications",
+		"storage",
+		"unlimitedStorage",
+		"webNavigation",
+		"tabs",
+		"scripting"
+	],
+	"host_permissions": [
+		"<all_urls>"
+	],
+	"content_security_policy": {
+		"extension_pages": "script-src 'self'; object-src 'self'; frame-src 'self' https://cn.bing.com http://i.tianqi.com;"
+	},
+	"version": "1.11.1.2"
+}

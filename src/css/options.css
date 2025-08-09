@@ -1,0 +1,134 @@
+/**************************************************
+* 	myNewTabWE by sakuyaa.
+*	
+*	https://github.com/sakuyaa/
+**************************************************/
+body {
+	background-color: #EEEEEE;
+	font-family: "microsoft yahei", sans-serif;
+	margin: 1.5em 3em;
+	font-size: 1em;
+}
+table {
+	width: 100%;
+}
+tr:hover {
+	background-color: #DDDDDD;
+}
+th {
+	background-color: #EEEEEE;   /*表头保持背景色*/
+	padding: .3em;
+}
+td {
+	padding: .3em;
+}
+button {
+	background-color: #F9F9F9;
+	border: .1em solid gray;
+	border-radius: .5em;
+	padding: .3em 1em;
+}
+button:hover {
+	background-color: #CCCCCC;
+}
+button:active {   /*点击效果*/
+	background-color: #BBBBBB;
+}
+input {
+	background-color: #F9F9F9;
+}
+input:focus {   /*输入框聚焦效果*/
+	box-shadow: 0 0 1em 0 #999999;
+	transition: box-shadow .1s ease-in-out; 
+}
+
+.group {
+	border: .1em solid gray;
+	border-radius: .5em;
+	margin: 1em 0;
+}
+.header {
+	background-color: #DDDDDD;
+	border-bottom: .1em solid gray;
+	border-top-left-radius: .5em;
+	border-top-right-radius: .5em;
+	padding: .5em 1em;
+}
+.header button {
+	float: right;   /*按钮靠右*/
+	margin: -.2em .2em;
+}
+.content {
+	padding: .5em 1em;
+}
+.group-table {
+	table-layout: fixed;   /*固定表格布局*/
+}
+.group-table td {   /*修剪文本*/
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.group-table th:first-child {
+	width: 7em;   /*固定表格布局需要对第一行各项控制宽度*/
+}
+.group-table th:nth-child(2) {
+	width: 2em;
+}
+.group-table th:last-child {   /*操作列*/
+	width: 15em;
+}
+.group-table td:nth-child(2), .group-table td:last-child {   /*图标按钮居中*/
+	text-align: center;
+}
+.group-table img {
+	height: 1.5 em;
+	margin-bottom: -.15em;   /*与文字对齐*/
+	width: 1em;
+}
+
+#edit-modal {   /*模态框遮罩*/
+	align-items: center;
+	background-color: rgba(0, 0, 0, .6);
+	display: none;   /*flex*/
+	height: 100%;
+	justify-content: center;
+	left: 0;
+	position: fixed;
+	top: 0;
+	width: 100%;
+	z-index: 9;
+}
+#edit-modal .content {   /*保持背景颜色和圆弧边框*/
+	background-color: #EEEEEE;
+	border-bottom-left-radius: .5em;
+	border-bottom-right-radius: .5em;
+}
+#edit-modal input:not([size]), #user-image-src, #title, #weather-src {   /*除图标列之外输入框长度*/
+	width: 99%;
+}
+#confirm {   /*确认取消按钮位置*/
+	border-top: .1em solid gray;
+	padding-top: .5em;
+	text-align: center;
+}
+#logo {
+	text-align: center;
+}
+#logo a {
+	color: black;
+	font-size: 2.5em;
+	opacity: .8;
+	text-decoration: none;
+}
+#logo img {   /*图片文字对齐*/
+	height: 1.3em;
+	vertical-align: top;
+}
+#config td:first-child {   /*选项文字宽度*/
+	width: 12em;
+}
+#image-upload {
+	float: right;   /*按钮靠右*/
+	padding: 0 .3em;
+}
