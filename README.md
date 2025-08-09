@@ -1,3 +1,4 @@
-# myNewTabWE by sakuyaa
+# myNewTabWE-Chrome by rongpengli
 
-[myNewTabMod](https://github.com/sakuyaa/myNewTabMod/)这个扩展的WebExtension版本，由于API限制部分功能无法实现。
+本扩展是[myNewTabWE Firefox扩展](https://github.com/sakuyaa/myNewTabWE)的Chrome版本，支持Bing每日动图更新、自定义链接等功能。
+
