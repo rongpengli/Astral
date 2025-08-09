@@ -1,7 +1,6 @@
 # myNewTabWE-Chrome by rongpengli
 
-本扩展是[myNewTabWE Firefox扩展](https://github.com/sakuyaa/myNewTabWE)的Chrome版本，旨在成为一款功能强大、轻量便捷的Chrome扩展，为你的每日浏览注入效率与个性！无论是追踪每日资讯、查看天气，还是快速访问常用网站，这款扩展都能完美满足你的需求。快来体验智能化、个性化的浏览新方式！
-
+本扩展是[myNewTabWE Firefox扩展](https://github.com/sakuyaa/myNewTabWE)的Chrome版本，旨在成为一款功能强大、轻量便捷的Chrome扩展，为你的每日浏览注入效率与个性！无论是追踪每日资讯、查看天气，还是快速访问常用网站，期待本扩展都能恰到好处地满足你的需求。
 
 ✨ 核心功能亮点：
 
