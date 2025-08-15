@@ -14,7 +14,7 @@
 
 💾 配置导入导出：个性化设置一键备份，跨设备同步无忧，随时随地保留你的专属体验。
 
-👍 导入![参考配置](https://raw.githubusercontent.com/rongpengli/myNewTabWE-Chrome/refs/heads/master/images/myNewTabWE.json)后，可以得到下图：
+👍 导入[参考配置](https://raw.githubusercontent.com/rongpengli/myNewTabWE-Chrome/refs/heads/master/images/myNewTabWE.json)后，可以得到下图：
 
 ![image](https://raw.githubusercontent.com/rongpengli/myNewTabWE-Chrome/refs/heads/master/images/ScreenShot.png)
 
