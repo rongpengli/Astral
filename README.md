@@ -1,4 +1,4 @@
-# myNewTabWE-Chrome by rongpengli, with acknowledgement to sakuyaa 
+# AuroraTab by rongpengli, with acknowledgement to myNewTabWE by sakuyaa 
 
 本扩展是[myNewTabWE Firefox扩展](https://github.com/sakuyaa/myNewTabWE)的Chrome版本，旨在成为一款功能强大、轻量便捷的Chrome扩展，为你的每日浏览注入效率与个性！无论是追踪每日资讯、查看天气，还是快速访问常用网站，期待本扩展都能恰到好处地满足你的需求。
 
@@ -22,7 +22,7 @@
 
 ![image](https://raw.githubusercontent.com/rongpengli/myNewTabWE-Chrome/refs/heads/master/images/ScreenShot2.png)
 
-🚀 为什么选择myNewTabWE-Chrome？
+🚀 为什么选择AuroraTab？
 
 - 轻量高效：简洁界面，流畅运行，资源占用少。
 
