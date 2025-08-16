@@ -14,7 +14,7 @@
 		"128": "image/logo.png"
 	},
 	"manifest_version": 3,
-	"name": "myNewTab WE",
+	"name": "AuroraTab",
 	"options_ui": {
 		"browser_style": false,
 		"open_in_tab": true,
