@@ -1,6 +1,7 @@
 /**************************************************
-* 	myNewTabWE by sakuyaa.
-*	
+*   by rongpengli
+*   https://github.com/rongpengli/
+*   Fork from sakuyaa's Firefox Extension myNewTabWE.
 *	https://github.com/sakuyaa/
 **************************************************/
 'use strict';
@@ -45,7 +46,7 @@ let myNewTabWE = {
 				myNewTabWE.sites = storage.sites;
 				resolve();
 			}, e => {
-				myNewTabWE.notify(e, '获取AuroraTab配置失败');
+				myNewTabWE.notify(e, '获取配置失败');
 				reject();
 			});
 		});
@@ -53,11 +54,11 @@ let myNewTabWE = {
 	setStorage: isConfig => {
 		if (isConfig) {   //保存配置
 			chrome.storage.local.set({ config: myNewTabWE.config }).then(null, e => {
-				myNewTabWE.notify(e, '设置AuroraTab配置失败');
+				myNewTabWE.notify(e, '设置配置失败');
 			});
 		} else {   //保存网址列表
 			chrome.storage.local.set({ sites: myNewTabWE.sites }).then(null, e => {
-				myNewTabWE.notify(e, '设置AuroraTab配置失败');
+				myNewTabWE.notify(e, '设置配置失败');
 			});
 		}
 	},
@@ -73,7 +74,7 @@ let myNewTabWE = {
 					try {
 						json = JSON.parse(reader.result);
 					} catch (e) {
-						myNewTabWE.notify(e, '导入AuroraTab配置失败');
+						myNewTabWE.notify(e, '导入配置失败');
 						return;
 					}
 					if (json.config) {
@@ -88,7 +89,7 @@ let myNewTabWE = {
 					chrome.storage.local.clear().then(() => chrome.storage.local.set(storage)).then(() => {
 						location.reload();   //刷新网页
 					}, e => {
-						myNewTabWE.notify(e, '设置AuroraTab配置失败');
+						myNewTabWE.notify(e, '设置配置失败');
 					});
 				};
 				reader.readAsText(upload.files[0]);
@@ -109,7 +110,7 @@ let myNewTabWE = {
 				myNewTabWE.notify(e, '获取定制css内容失败');
 			}
 			chrome.downloads.download({
-				filename: 'AuroraTab.json',
+				filename: 'AstralNewTab.json',
 				saveAs: true,
 				url: URL.createObjectURL(new Blob([JSON.stringify({
 					config: myNewTabWE.config,
