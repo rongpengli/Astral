@@ -1,4 +1,4 @@
-# AuroraTab by rongpengli 
+# Astral New Tab 星辰新标签页 by rongpengli 
 
 本扩展是[myNewTabWE Firefox扩展](https://github.com/sakuyaa/myNewTabWE)的Chrome版本，旨在成为一款功能强大、轻量便捷的Chrome扩展，为你的每日浏览注入效率与个性！无论是追踪每日资讯、查看天气，还是快速访问常用网站，期待本扩展都能恰到好处地满足你的需求。**感谢sakuyaa对Firefox版本myNewTabWE的辛勤开发。**
 
@@ -14,15 +14,15 @@
 
 💾 配置导入导出：个性化设置一键备份，跨设备同步无忧，随时随地保留你的专属体验。
 
-🉑️ 导入[参考配置](https://raw.githubusercontent.com/rongpengli/myNewTabWE-Chrome/refs/heads/master/images/myNewTabWE.json)后，可以得到下图：
+🉑️ 导入[参考配置](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/myNewTabWE.json)后，可以得到下图：
 
-![image](https://raw.githubusercontent.com/rongpengli/myNewTabWE-Chrome/refs/heads/master/images/ScreenShot.png)
+![image](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/ScreenShot.png)
 
 👀 点击选项，可以进行个性化设置：
 
-![image](https://raw.githubusercontent.com/rongpengli/myNewTabWE-Chrome/refs/heads/master/images/ScreenShot2.png)
+![image](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/ScreenShot2.png)
 
-🚀 为什么选择AuroraTab？
+🚀 为什么选择Astral？
 
 - 轻量高效：简洁界面，流畅运行，资源占用少。
 
