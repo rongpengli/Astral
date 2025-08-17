@@ -111,7 +111,6 @@ let myNewTabWE = {
 			}
 			chrome.downloads.download({
 				filename: 'AstralNewTab.json',
-				saveAs: true,
 				url: URL.createObjectURL(new Blob([JSON.stringify({
 					config: myNewTabWE.config,
 					sites: myNewTabWE.sites,
