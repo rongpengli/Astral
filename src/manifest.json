@@ -6,7 +6,6 @@
 	"chrome_url_overrides": {
 		"newtab": "html/index.html"
 	},
-	"name": "NewTab",
 	"description": "Astral New Tab (星辰新标签页)：一款兼具美感与效率的新标签页扩展。",
 	"icons": {
 		"16": "image/logo.png",
