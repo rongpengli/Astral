@@ -7,14 +7,14 @@
 		"newtab": "html/index.html"
 	},
 	"name": "NewTab",
-	"description": "Enhance your new tab experience with a comfortable design and customizable links. Sincere thanks to sakuyaa for sharing codes of Firefox at https://github.com/sakuyaa/myNewTabWE.",
+	"description": "Astral New Tab (星辰新标签页)：一款兼具美感与效率的新标签页扩展。",
 	"icons": {
 		"16": "image/logo.png",
 		"48": "image/logo.png",
 		"128": "image/logo.png"
 	},
 	"manifest_version": 3,
-	"name": "AuroraTab",
+	"name": "Astral New Tab",
 	"options_ui": {
 		"browser_style": false,
 		"open_in_tab": true,
