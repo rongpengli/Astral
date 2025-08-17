@@ -109,13 +109,18 @@ let myNewTabWE = {
 				myNewTabWE.notify(e, '获取定制css内容失败');
 			}
 			chrome.downloads.download({
-				filename: 'myNewTabWE.json',
+				filename: 'AuroraTab.json',
 				saveAs: true,
 				url: URL.createObjectURL(new Blob([JSON.stringify({
 					config: myNewTabWE.config,
 					sites: myNewTabWE.sites,
 					css: storage.css
-				}, null, '\t')]))
+				}, null, '\t')], { type: 'application/json' })),
+				// url: URL.createObjectURL(new Blob([JSON.stringify({
+				// 	config: myNewTabWE.config,
+				// 	sites: myNewTabWE.sites,
+				// 	css: storage.css
+				// }, null, '\t')]))
 			});
 		});
 	},
