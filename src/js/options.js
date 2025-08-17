@@ -45,7 +45,7 @@ let myNewTabWE = {
 				myNewTabWE.sites = storage.sites;
 				resolve();
 			}, e => {
-				myNewTabWE.notify(e, '获取myNewTabWE配置失败');
+				myNewTabWE.notify(e, '获取AuroraTab配置失败');
 				reject();
 			});
 		});
@@ -53,11 +53,11 @@ let myNewTabWE = {
 	setStorage: isConfig => {
 		if (isConfig) {   //保存配置
 			chrome.storage.local.set({ config: myNewTabWE.config }).then(null, e => {
-				myNewTabWE.notify(e, '设置myNewTabWE配置失败');
+				myNewTabWE.notify(e, '设置AuroraTab配置失败');
 			});
 		} else {   //保存网址列表
 			chrome.storage.local.set({ sites: myNewTabWE.sites }).then(null, e => {
-				myNewTabWE.notify(e, '设置myNewTabWE配置失败');
+				myNewTabWE.notify(e, '设置AuroraTab配置失败');
 			});
 		}
 	},
@@ -73,7 +73,7 @@ let myNewTabWE = {
 					try {
 						json = JSON.parse(reader.result);
 					} catch (e) {
-						myNewTabWE.notify(e, '导入myNewTabWE配置失败');
+						myNewTabWE.notify(e, '导入AuroraTab配置失败');
 						return;
 					}
 					if (json.config) {
@@ -88,7 +88,7 @@ let myNewTabWE = {
 					chrome.storage.local.clear().then(() => chrome.storage.local.set(storage)).then(() => {
 						location.reload();   //刷新网页
 					}, e => {
-						myNewTabWE.notify(e, '设置myNewTabWE配置失败');
+						myNewTabWE.notify(e, '设置AuroraTab配置失败');
 					});
 				};
 				reader.readAsText(upload.files[0]);
