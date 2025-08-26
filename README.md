@@ -2,6 +2,8 @@
 
 作为[myNewTabWE Firefox扩展](https://github.com/sakuyaa/myNewTabWE)的 Chrome 版本，Astral New Tab 旨在成为一款功能强大、轻量便捷的 Chrome 新标签页扩展，为你的每日浏览注入效率与个性！无论是追踪每日资讯、查看天气，还是快速访问常用网站，期待 Astral New Tab 都能恰到好处地满足你的需求。**感谢sakuyaa对 myNewTabWE Firefox版的辛勤开发。**
 
+扩展发布地址：https://chromewebstore.google.com/detail/astral-new-tab/mldjngfcllpkobkbfjildlaakkpoaadj
+
 ✨ 核心功能亮点：
 
 🌅 Bing每日精选：每日自动更新Bing精美壁纸，随时下载高清壁纸，让你的浏览器每天都有新惊喜！
