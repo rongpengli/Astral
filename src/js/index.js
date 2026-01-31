@@ -43,7 +43,7 @@ let myNewTabWE = {
 			type: 'basic',
 			message: message + '',
 			title: title,
-			iconUrl: chrome.runtime.getURL('image/home.svg')
+			iconUrl: chrome.runtime.getURL('image/logo.png')
 		});
 	},
 
@@ -141,13 +141,13 @@ let myNewTabWE = {
 					url: imageSrc
 				}, (downloadId) => {
 					if (chrome.runtime.lastError) {
-						myNewTabWE.notify(chrome.runtime.lastError.message, '下载失败');
+						myNewTabWE.notify(chrome.runtime.lastError.message, 'Astral New Tab壁纸下载失败');
 						return;
 					}
-					myNewTabWE.notify('下载已开始', '下载壁纸');
+					myNewTabWE.notify('当前壁纸下载成功', 'Astral New Tab壁纸下载通知');
 				});
 			} else {
-				myNewTabWE.notify('没有可下载的图片', '下载失败');
+				myNewTabWE.notify('没有可下载的图片', 'Astral New Tab壁纸下载通知');
 			}
 		});
 
@@ -312,7 +312,14 @@ let myNewTabWE = {
 					conflictAction: 'overwrite',   //覆盖旧文件避免出现重复文件
 					filename: imageName,
 					url: URL.createObjectURL(image)
-				});
+				},
+					(downloadId) => {
+						if (chrome.runtime.lastError) {
+							console.error('Auto download failed:', chrome.runtime.lastError.message);
+							return;
+						}
+						console.log('Auto download started, id:', downloadId);
+					});	
 			}
 		};
 		reader.readAsDataURL(image);
