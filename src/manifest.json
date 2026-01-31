@@ -34,5 +34,5 @@
 	"content_security_policy": {
 		"extension_pages": "script-src 'self'; object-src 'self'; frame-src 'self' https://cn.bing.com http://i.tianqi.com;"
 	},
-	"version": "1.11.1.4"
+	"version": "1.12"
 }
