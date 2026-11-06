@@ -54,6 +54,24 @@
 			<a href="https://github.com/rongpengli/Astral/releases" target="_blank"><button>更新历史</button></a>
 		</div>
 	</div>
+
+	<section class="group sync-group" id="astral-sync-panel" aria-labelledby="sync-heading">
+		<div class="header sync-section-heading" id="sync-heading">配置同步</div>
+		<div class="content sync-content">
+			<div class="sync-topline">
+				<div class="sync-intro"><div><div class="sync-title">自动同步配置</div><div class="sync-inline-status" role="status" aria-live="polite"><span id="astral-sync-status">正在检查…</span><span id="astral-sync-pending" class="sync-pill" hidden>待同步</span><span id="astral-sync-retry-info"></span></div></div></div>
+				<label class="sync-switch" title="开启或关闭自动同步"><input type="checkbox" id="astral-sync-enable" aria-label="启用 Chrome 配置同步"><span class="sync-switch-track"></span><span class="sync-switch-label" id="astral-sync-switch-label">未开启</span></label>
+			</div>
+			<div id="astral-sync-detail" class="sync-status-detail" hidden></div>
+			<div id="astral-sync-first-run" class="sync-choice" hidden>
+				<strong>云端已有配置，请选择首次同步方式</strong>
+				<p>建议先使用上方「导出」备份本地配置。选择后将替换另一端的同步字段。</p>
+				<div class="sync-actions"><button id="astral-sync-choose-local" class="sync-button sync-primary" type="button">使用本机配置</button><button id="astral-sync-choose-remote" class="sync-button" type="button">使用云端配置</button><button id="astral-sync-cancel" class="sync-button sync-quiet" type="button">取消</button></div>
+			</div>
+			<div class="sync-actions sync-primary-actions"><button id="astral-sync-retry" class="sync-button sync-primary" type="button">立即同步</button><button id="astral-sync-push" class="sync-button" type="button">上传本机配置</button><button id="astral-sync-pull" class="sync-button" type="button">从云端恢复</button><span id="astral-sync-time" class="sync-action-time" aria-label="最近一次本机提交时间"></span></div>
+			
+		</div>
+	</section>
 	<div class="group">
 		<div class="header">选项<button id="config-default">恢复默认</button></div>
 		<div class="content">
@@ -150,7 +168,17 @@
 			</div>
 		</div>
 	</div>
-	<script src="../js/options.js"></script>
+	
+
+<script src="../js/site-icons.js"></script>
+<script src="../js/merge-core.js"></script>
+<script src="../js/sync.js"></script>
+<script src="../js/image-utils.js"></script>
+<script src="../js/options-sync-ui.js"></script>
+
+<script src="../js/backup-format.js"></script>
+<script src="../js/icon-compare.js"></script>
+<script src="../js/options.js"></script>
 </body>
 
 </html>

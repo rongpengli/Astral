@@ -47,7 +47,7 @@ let myNewTabWE = {
 				resolve();
 			}, e => {
 				myNewTabWE.notify(e, '获取配置失败');
-				reject();
+				resolve(false);
 			});
 		});
 	},
@@ -63,67 +63,49 @@ let myNewTabWE = {
 		}
 	},
 
-	//初始化导入导出功能
+	// 导入旧版与新版统一格式；原始旧图标另存本机备份。
 	initImportExport: () => {
 		$id('import').addEventListener('click', () => {
-			upload.setAttribute('accept', 'application/json');
-			upload.onchange = () => {
-				let reader = new FileReader();
-				reader.onload = () => {
-					let json, storage = {};
-					try {
-						json = JSON.parse(reader.result);
-					} catch (e) {
-						myNewTabWE.notify(e, '导入配置失败');
-						return;
-					}
-					if (json.config) {
-						storage.config = json.config;
-					}
-					if (json.sites) {
-						storage.sites = json.sites;
-					}
-					if (json.css) {
-						storage.css = json.css;
-					}
-					chrome.storage.local.clear().then(() => chrome.storage.local.set(storage)).then(() => {
-						location.reload();   //刷新网页
-					}, e => {
-						myNewTabWE.notify(e, '设置配置失败');
-					});
-				};
-				reader.readAsText(upload.files[0]);
+			upload.setAttribute('accept', 'application/json,.json');
+			upload.value = '';
+			upload.onchange = async () => {
+				if (!upload.files?.[0]) return;
+				try {
+					const parsed = JSON.parse(await upload.files[0].text());
+                    // Commit first. Online icon comparison must never gate configuration import.
+                    const {data,originalIcons} = AstralBackup.migrate(parsed);
+                    const current = await chrome.storage.local.get(['config','sites','css','__astralSync']);
+                    // Preserve the old settings and disable sync before writing imported data.
+                    // The next cloud operation must be an explicit user action.
+                    await chrome.storage.local.set({
+                      __astralImportBackup: {createdAt:Date.now(),data:{config:current.config,sites:current.sites,css:current.css}},
+                      __astralLegacyIconBackup: {createdAt:Date.now(),icons:originalIcons},
+                      __astralSync: {...(current.__astralSync||{}),enabled:false,userDisabled:true,status:'off',pending:false,base:null,error:null,localModifiedAt:Date.now(),lastSyncedModifiedAt:0}
+                    });
+                    await chrome.storage.local.set(data);
+                    const verify = await chrome.storage.local.get(['config','sites','css']);
+                    if (JSON.stringify(verify.sites)!==JSON.stringify(data.sites)) throw Error('本机配置写入后校验失败');
+                    alert('配置已导入本机并校验成功。为防止云端旧配置覆盖，自动同步已暂停。请检查网站列表后，再手动选择「上传本机配置」。');
+					location.reload();
+				} catch(e) { alert('导入配置失败：'+(e.message||e)); }
 			};
 			upload.click();
 		});
 		$id('export').addEventListener('click', async () => {
-			let storage = {
-				css: {
-					version: 0,
-					index: '',
-					weather: ''
-				}
-			};
-			try {   //获取定制css内容
-				storage = await chrome.storage.local.get(storage);
-			} catch (e) {
-				myNewTabWE.notify(e, '获取定制css内容失败');
-			}
-			chrome.downloads.download({
-				filename: 'AstralNewTab.json',
-				url: URL.createObjectURL(new Blob([JSON.stringify({
-					config: myNewTabWE.config,
-					sites: myNewTabWE.sites,
-					css: storage.css
-				}, null, '\t')], { type: 'application/json' })),
-				// url: URL.createObjectURL(new Blob([JSON.stringify({
-				// 	config: myNewTabWE.config,
-				// 	sites: myNewTabWE.sites,
-				// 	css: storage.css
-				// }, null, '\t')]))
-			});
+			try {
+				const stored = await chrome.storage.local.get(['config','sites','css']);
+				const data = AstralBackup.exportData({
+					config:stored.config || myNewTabWE.config,
+					sites:stored.sites || myNewTabWE.sites,
+					css:stored.css || {version:0,index:'',weather:''}
+				});
+				const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+				await chrome.downloads.download({filename:'AstralNewTab.json',url,saveAs:true});
+				setTimeout(()=>URL.revokeObjectURL(url),60000);
+			} catch(e) { alert('导出配置失败：'+(e.message||e)); }
 		});
 	},
+
 	//初始化选项
 	initConf: () => {
 		$id('newtab-open').checked = myNewTabWE.config.newTabOpen;
@@ -173,60 +155,25 @@ let myNewTabWE = {
 			upload.setAttribute('accept', 'image/*');
 			upload.onchange = () => {
 				let reader = new FileReader();
-				reader.onload = () => {
-					$id('edit-icon').value = reader.result;
-				};
+				reader.onload = async () => {
+                    try { $id('edit-icon').value = await AstralImages.compactDataUrl(reader.result);
+                    $id('edit-icon').dataset.iconMode = 'custom'; }
+                    catch (e) { console.warn('图标压缩失败，保留原图', e); $id('edit-icon').value = reader.result; $id('edit-icon').dataset.iconMode = 'custom'; }
+                };
 				reader.readAsDataURL(upload.files[0]);
 			};
 			upload.click();
 		});
-		let count = 0;   //用来判断获取到的图标时的模态框是否还是原来的
-		$id('edit-modal').setAttribute('count', count);
-		$id('edit-geticon').addEventListener('click', () => {
-			let iconUrl = /^https?:\/\/[^\/]+/i.exec($id('edit-url').value);   //获取host
-			if (iconUrl) {
-				$id('edit-geticon').textContent = '正在获取';
-				count = parseInt($id('edit-modal').getAttribute('count'));
-				iconUrl += '/favicon.ico';
-				let xhr = new XMLHttpRequest();
-				xhr.responseType = 'document';
-				xhr.open('GET', $id('edit-url').value, true);
-				xhr.onload = () => {
-					if (xhr.status == 200) {
-						let icon = xhr.response.querySelector('link[rel~=icon]');
-						if (icon && icon.href) {
-							iconUrl = icon.href;
-						} else {
-							console.log($id('edit-url').value + ' 没有指定图标，尝试获取favicon.ico');
-						}
-					} else {
-						console.log(new Error(xhr.statusText));
-					}
-					//获取图标
-					xhr = new XMLHttpRequest();
-					xhr.responseType = 'blob';
-					xhr.open('GET', iconUrl, true);
-					xhr.onload = () => {
-						if (count == parseInt($id('edit-modal').getAttribute('count'))) {
-							if (xhr.status == 200) {
-								let reader = new FileReader();
-								reader.onload = () => {
-									$id('edit-icon').value = reader.result;
-								};
-								reader.readAsDataURL(xhr.response);
-							} else {
-								myNewTabWE.notify(new Error(xhr.statusText), '获取图标失败');
-							}
-							$id('edit-geticon').textContent = '自动获取';
-						}
-					};
-					xhr.send(null);
-				};
-				xhr.send(null);
-			} else {
-				myNewTabWE.notify($id('edit-url').value, '不是标准http网址');
-			}
-		});
+        $id('edit-geticon').addEventListener('click', () => {
+            const icon = AstralIcons.url($id('edit-url').value);
+            if (!icon) {
+                myNewTabWE.notify($id('edit-url').value, '不是标准http网址');
+                return;
+            }
+            $id('edit-icon').value = icon;
+            $id('edit-icon').dataset.iconMode = 'auto';
+        });
+
 	},
 
 	init: () => {
@@ -339,7 +286,8 @@ let myNewTabWE = {
 				url: '',
 				icon: ''
 			};
-			myNewTabWE.editSite(site).then(() => {
+			myNewTabWE.editSite(site).then(confirmed => {
+                if (!confirmed) return;
 				group.list.push(site);
 				myNewTabWE.setStorage();
 				let node = myNewTabWE.buildTr(site, group.list, row.cloneNode(true));
@@ -372,7 +320,8 @@ let myNewTabWE = {
 			img = node.querySelector('.row-icon img'),
 			url = node.querySelector('.row-url');
 		title.textContent = title.title = site.title;
-		img.src = img.title = site.icon ? site.icon : '../image/default.svg';
+		AstralIcons.apply(img, site);
+        img.title = site.url;
 		url.textContent = url.title = site.url;
 		node.querySelector('.row-up').addEventListener('click', () => {
 			let index = list.indexOf(site);
@@ -391,9 +340,11 @@ let myNewTabWE = {
 			}
 		});
 		node.querySelector('.row-edit').addEventListener('click', () => {
-			myNewTabWE.editSite(site).then(() => {
+			myNewTabWE.editSite(site).then(confirmed => {
+                if (!confirmed) return;
 				title.textContent = title.title = site.title;
-				img.src = img.title = site.icon;
+				AstralIcons.apply(img, site);
+                img.title = site.url;
 				url.textContent = url.title = site.url;
 				myNewTabWE.setStorage();
 			});
@@ -409,20 +360,23 @@ let myNewTabWE = {
 		return new Promise((resolve, reject) => {
 			$id('edit-title').value = site.title;
 			$id('edit-url').value = site.url;
-			$id('edit-icon').value = site.icon;
+			$id('edit-icon').value = AstralIcons.mode(site) === 'auto' ? AstralIcons.url(site.url) : (site.icon || '');
+            $id('edit-icon').dataset.iconMode = AstralIcons.mode(site);
 			$id('edit-geticon').textContent = '自动获取';
-			$id('edit-confirm').onclick = () => {
+			$id('edit-icon').oninput = () => { $id('edit-icon').dataset.iconMode = 'custom'; };
+            $id('edit-confirm').onclick = () => {
 				site.title = $id('edit-title').value;
 				site.url = $id('edit-url').value;
-				site.icon = $id('edit-icon').value;
+				site.iconMode = $id('edit-icon').dataset.iconMode === 'auto' ? 'auto' : 'custom';
+                site.icon = site.iconMode === 'auto' ? '' : $id('edit-icon').value;
 				$id('edit-modal').style.display = 'none';
 				$id('edit-modal').setAttribute('count', parseInt($id('edit-modal').getAttribute('count')) + 1);
-				resolve();
+				resolve(true);
 			};
 			$id('edit-cancel').onclick = () => {
 				$id('edit-modal').style.display = 'none';
 				$id('edit-modal').setAttribute('count', parseInt($id('edit-modal').getAttribute('count')) + 1);
-				reject();
+				resolve(false);
 			};
 			$id('edit-modal').style.display = 'flex';
 			$id('edit-title').focus();
@@ -430,4 +384,4 @@ let myNewTabWE = {
 	}
 };
 
-myNewTabWE.getStorage().then(myNewTabWE.init);
+myNewTabWE.getStorage().then(myNewTabWE.init).catch(e => console.error('Astral options initialization failed:',e));

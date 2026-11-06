@@ -345,7 +345,7 @@ let myNewTabWE = {
 			if (myNewTabWE.config.newTabOpen) {
 				a.setAttribute('target', '_blank');
 			}
-			img.src = site.icon ? site.icon : '../image/default.svg';
+			AstralIcons.apply(img, site);
 
 			a.appendChild(img);
 			a.appendChild(textNode);
@@ -408,4 +408,37 @@ let myNewTabWE = {
 	}
 };
 
-myNewTabWE.getStorage().then(myNewTabWE.init);
+// Wait briefly for first-run cloud recovery before reading local storage.
+// If Chrome Sync is offline, render local data instead of leaving a blank tab.
+async function astralInitialLoad() {
+  try {
+    await Promise.race([
+      chrome.runtime.sendMessage({type:'ASTRAL_SYNC_READY'}),
+      new Promise(resolve => setTimeout(resolve, 2500))
+    ]);
+  } catch (error) {
+    console.warn('Astral sync initial check:', error);
+  }
+  await myNewTabWE.getStorage();
+  myNewTabWE.init();
+}
+
+// Apply changes received while a tab is already open. Rebuilding the navigation
+// table prevents duplicate rows and ensures a cloud restore becomes visible.
+let astralRefreshTimer;
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local' || !['config','sites','css'].some(key => key in changes)) return;
+  clearTimeout(astralRefreshTimer);
+  astralRefreshTimer = setTimeout(async () => {
+    try {
+      const previousCss = JSON.stringify(myNewTabWE.css);
+      await myNewTabWE.getStorage();
+      const table = $id('navtable');
+      if (table) { table.replaceChildren(); myNewTabWE.initSite(); }
+      document.title = myNewTabWE.config.title || 'Astral';
+      // Existing initCss injects styles; a CSS change needs a full reload.
+      if (JSON.stringify(myNewTabWE.css) !== previousCss) location.reload();
+    } catch (error) { console.error('Astral refresh after sync:',error); }
+  }, 120);
+});
+astralInitialLoad().catch(error => console.error('Astral startup:',error));
