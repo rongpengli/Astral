@@ -236,8 +236,8 @@ const AstralSync = (() => {
   async function bootstrap() {
     const s = await state();
     if (s.userDisabled || s.enabled) return;
-    // No implicit cloud restore or upload. The user must explicitly enable sync.
-    return;
+    // Default to enable sync.
+    await enable();
   }
   async function schedule() {
     if(suppress) return;
