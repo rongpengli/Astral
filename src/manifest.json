@@ -32,7 +32,7 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; frame-src 'self' https://cn.bing.com http://i.tianqi.com;"
   },
-  "version": "1.12",
+  "version": "1.12.1",
   "background": {
     "service_worker": "background.js"
   }
