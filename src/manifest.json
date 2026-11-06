@@ -1,0 +1,39 @@
+{
+  "author": "rongpengli",
+  "chrome_url_overrides": {
+    "newtab": "html/index.html"
+  },
+  "description": "Astral New Tab (星辰新标签页)：一款兼具美感与效率的新标签页扩展。",
+  "icons": {
+    "16": "image/logo.png",
+    "48": "image/logo.png",
+    "128": "image/logo.png"
+  },
+  "manifest_version": 3,
+  "name": "Astral New Tab",
+  "options_ui": {
+    "browser_style": false,
+    "open_in_tab": true,
+    "page": "html/options.html"
+  },
+  "permissions": [
+    "downloads",
+    "notifications",
+    "storage",
+    "unlimitedStorage",
+    "webNavigation",
+    "tabs",
+    "scripting",
+    "alarms"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; frame-src 'self' https://cn.bing.com http://i.tianqi.com;"
+  },
+  "version": "1.12.3",
+  "background": {
+    "service_worker": "background.js"
+  }
+}
