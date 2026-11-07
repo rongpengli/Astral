@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="icon" href="../image/logo.png" type="image/png" />
+	</head>
+	<body>
+		<header></header>
+		<div id="date">
+			<span id="solar">
+				<span id="solar-date"></span>
+				<span id="solar-festival" class="festival"></span>
+				<span id="solar-holiday" class="holiday"></span>
+			</span>
+			<br />
+			<span id="lunar">
+				<span id="lunar-date"></span>
+				<span id="lunar-festival" class="festival"></span>
+				<span id="lunar-holiday" class="holiday"></span>
+			</span>
+		</div>
+		<div id="navs">
+			<div id="navtitle">
+                <div id="weather-container" aria-live="polite"></div>
+                <div class="nav-actions">
+                    <a href="#" id="download-wallpaper" title="下载当前壁纸"><svg class="action-icon" aria-hidden="true" focusable="false" height="16px" version="1.1" viewBox="0 0 16 16" width="16px" xmlns="http://www.w3.org/2000/svg" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns" xmlns:xlink="http://www.w3.org/1999/xlink"><title/><defs/><g fill="none" fill-rule="evenodd" stroke="none" stroke-width="1"><g fill="#ffffff" transform="translate(-720.000000, -432.000000)"><path d="M721,446 L733,446 L733,443 L735,443 L735,446 L735,448 L721,448 Z M721,443 L723,443 L723,446 L721,446 Z M726,433 L730,433 L730,440 L732,440 L728,445 L724,440 L726,440 Z M726,433"/></g></g></svg><span class="action-label">下载壁纸</span></a>
+                    <a href="#" id="change-wallpaper" title="在最近几天的 Bing 壁纸中切换"><svg class="action-icon" aria-hidden="true" focusable="false" height="16px" version="1.1" viewBox="0 0 16 16" width="16px" xmlns="http://www.w3.org/2000/svg" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns" xmlns:xlink="http://www.w3.org/1999/xlink"><title/><defs/><g fill="none" fill-rule="evenodd" stroke="none" stroke-width="1"><g fill="#ffffff" transform="translate(-288.000000, -144.000000)"><path d="M296,158 C298.973001,158 301.440972,155.837706 301.917042,153 L303.938106,153 C303.446016,156.946304 300.079623,160 296,160 C293.310983,160 290.931833,158.673299 289.481412,156.63876 L288,158 L288,153 L288.061894,153 L290.082958,153 L293.441406,153 L290.969469,155.271414 C292.039897,156.914078 293.893133,158 296,158 Z M301.917042,151 L301,151 L299,151 L301.123754,148.876298 C300.069891,147.151341 298.169401,146 296,146 C293.026999,146 290.559028,148.162294 290.082958,151 L288.061894,151 C288.553984,147.053696 291.920377,144 296,144 C298.719979,144 301.122913,145.357428 302.568307,147.43178 L304,146.000122 L304,151 L303.938106,151 Z M301.917042,151"/></g></g></svg><span class="action-label">切换壁纸</span></a>
+                    <a href="../html/options.html" draggable="false" target="_blank" title="扩展选项"><svg class="action-icon" aria-hidden="true" focusable="false" height="16px" version="1.1" viewBox="0 0 16 16" width="16px" xmlns="http://www.w3.org/2000/svg" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns" xmlns:xlink="http://www.w3.org/1999/xlink"><title/><defs/><g fill="none" fill-rule="evenodd" stroke="none" stroke-width="1"><g fill="#ffffff" transform="translate(-768.000000, -96.000000)"><path d="M776,108 C778.209139,108 780,106.209139 780,104 C780,101.790861 778.209139,100 776,100 C773.790861,100 772,101.790861 772,104 C772,106.209139 773.790861,108 776,108 Z M780.890749,100.523464 C781.405567,101.246403 781.764097,102.088347 781.917042,103 L784,103 L784,105 L781.917042,105 C781.706284,106.256253 781.105149,107.380135 780.940826,107.526613 L782.363961,108.949748 L780.949748,110.363961 L779.476536,108.89075 C778.753613,109.405561 777.911662,109.764096 777,109.917042 L777,112 L775,112 L775,109.917042 C774.088338,109.764096 773.246387,109.405561 772.523464,108.89075 L771.050253,110.363961 L769.636039,108.949748 L771.109251,107.476536 C770.594433,106.753597 770.235903,105.911653 770.082958,105 L768,105 L768,103 L770.082958,103 C770.293716,101.743747 770.894851,100.619865 771.059174,100.473387 L769.636039,99.0502526 L771.050253,97.636039 L772.523464,99.1092504 C773.246387,98.5944389 774.088338,98.2359041 775,98.0829584 L775,96 L777,96 L777,98.0829584 C777.911662,98.2359041 778.753613,98.5944389 779.476536,99.1092505 L780.949748,97.636039 L782.363961,99.0502526 L781.009978,100.404236 Z M780.890749,100.523464"/></g></g></svg><span class="action-label">选项</span></a>
+                </div>
+			</div>
+			<table id="navtable"></table>
+		</div>
+		<footer></footer>
+		<script src="../js/calendar.min.js"></script>
+		<script src="../js/site-icons.js"></script>
+<script src="../js/compat.js"></script>
+<script src="../js/storage.js"></script>
+        <script src="../js/wallpaper.js"></script>
+        <script src="../js/weather.js"></script>
+        <script src="../js/index.js"></script>
+	</body>
+</html>
