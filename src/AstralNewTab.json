@@ -1,0 +1,118 @@
+{
+  "config": {
+    "title": "Astral New Tab",
+    "useBigImage": 2,
+    "bingMaxHistory": 8,
+    "weatherLatitude": 30.169022901212557,
+    "weatherLongitude": 120.0681910043781,
+    "weatherCity": "杭州市",
+    "weatherMode": "native",
+    "autoChange": true,
+    "autoDownload": false,
+    "downloadDir": "bingImg",
+    "userImage": false,
+    "userImageSrc": "",
+    "newTabOpen": true,
+    "weatherLocationMode": "manual",
+    "syncEnabled": true
+  },
+  "sites": [
+    {
+      "list": [
+        {
+          "title": "百度",
+          "url": "http://www.baidu.com/",
+          "_syncId": "10cc1eb7-ac6f-525a-814c-7585f37db870"
+        },
+        {
+          "title": "谷歌",
+          "url": "https://www.google.com/",
+          "_syncId": "a8caa73d-b679-5075-8728-8385d1333ee4"
+        },
+        {
+          "title": "搜狗",
+          "url": "https://sogou.com/",
+          "_syncId": "c333a03b-f4ad-50cf-a5c9-31afe805ba9e"
+        },
+        {
+          "title": "必应",
+          "url": "https://www.bing.com/",
+          "_syncId": "2bef2d0d-2764-5e7c-8483-0e4fdd4ca3ff"
+        },
+        {
+          "title": "Duckduckgo",
+          "url": "https://duckduckgo.com/",
+          "_syncId": "668133a7-557c-5749-a033-e7303e325aff"
+        }
+      ],
+      "name": "搜索",
+      "_syncId": "56b836a1-e5c2-5758-a02e-3287fc77fdff"
+    },
+    {
+      "list": [
+        {
+          "title": "新华网",
+          "url": "http://www.xinhuanet.com/",
+          "_syncId": "4852565e-1089-55d7-b379-bec9c27b5f37"
+        },
+        {
+          "title": "央视网",
+          "url": "http://www.cctv.com/",
+          "_syncId": "c806f799-aad6-55bf-99ca-fbff80cafb03"
+        },
+        {
+          "title": "学习强国",
+          "url": "https://www.xuexi.cn/",
+          "_syncId": "24292b8a-a716-5488-95d0-29fb5d48eacf"
+        },
+        {
+          "title": "腾讯",
+          "url": "http://www.qq.com/",
+          "_syncId": "a96cf8ea-7251-51c5-8855-1b778a0a8008"
+        },
+        {
+          "title": "网易",
+          "url": "http://www.163.com/",
+          "_syncId": "444ed6be-be5e-5566-bc9b-0c44d33d2f74"
+        }
+      ],
+      "name": "新闻",
+      "_syncId": "dc60a14f-9abf-5ed3-a577-67cc2d0cdc5f"
+    },
+    {
+      "list": [
+        {
+          "title": "爱奇艺",
+          "url": "http://www.iqiyi.com/",
+          "_syncId": "ce46f930-19bd-5f6e-bc31-7396802d30a5"
+        },
+        {
+          "title": "优酷",
+          "url": "https://www.youku.com/",
+          "_syncId": "476c3a37-97c6-5a34-817f-bcbdaf0414d5"
+        },
+        {
+          "title": "腾讯视频",
+          "url": "https://v.qq.com/",
+          "_syncId": "7c34d106-6b7e-5c1e-9315-6c8533b11fc1"
+        },
+        {
+          "title": "哔哩哔哩",
+          "url": "https://www.bilibili.com/",
+          "_syncId": "a0aa4b1c-2124-50d2-af48-531bc744bea1"
+        },
+        {
+          "title": "YouTube",
+          "url": "https://www.youtube.com/",
+          "_syncId": "3fe0be20-80bf-53b1-9dbc-086ef4b53aff"
+        }
+      ],
+      "name": "影音",
+      "_syncId": "afd71603-ce9c-5340-a400-7845d93f93f9"
+    }
+  ],
+  "css": {
+    "index": "",
+    "version": 0
+  }
+}
