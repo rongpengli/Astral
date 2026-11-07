@@ -14,7 +14,7 @@
 
 ## 参考配置
 
-导入[参考配置](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/myNewTabWE.json)后，可以获得如下导航布局：
+使用[参考配置](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/src/AstralNewTab.json)后，可以获得如下导航布局：
 
 ![参考配置效果](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/main.png)
 
