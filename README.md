@@ -18,11 +18,11 @@ Chrome Web Store：[Astral New Tab](https://chromewebstore.google.com/detail/ast
 
 导入[参考配置](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/myNewTabWE.json)后，可以获得如下导航布局：
 
-![参考配置效果](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/ScreenShot.png)
+![参考配置效果]([https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/main.png])
 
 在“选项”页面中，可调整壁纸、天气、导航和同步设置：
 
-![选项页面](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/ScreenShot2.png)
+![选项页面](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/settings.png)
 
 ## 为什么选择 Astral？
 
