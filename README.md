@@ -1,34 +1,31 @@
-# Astral New Tab 星辰新标签页 by rongpengli 
+# Astral New Tab 星辰新标签页 by rongpengli
 
-作为[myNewTabWE Firefox扩展](https://github.com/sakuyaa/myNewTabWE)的 Chrome 版本，Astral New Tab 旨在成为一款功能强大、轻量便捷的 Chrome 新标签页扩展，为你的每日浏览注入效率与个性！无论是追踪每日资讯、查看天气，还是快速访问常用网站，期待 Astral New Tab 都能恰到好处地满足你的需求。**感谢sakuyaa对 myNewTabWE Firefox版的辛勤开发。**
+Astral New Tab 是一款面向 Chrome 的新标签页扩展，它将常用网站、日期、天气与壁纸整合在一个简洁的新标签页中，让日常浏览更顺手。Astral New Tab 基于 [sakuyaa 开发的 myNewTabWE Firefox 扩展](https://github.com/sakuyaa/myNewTabWE) 进行功能扩展，感谢 sakuyaa 为 myNewTabWE Firefox 版所做的贡献。
 
-扩展Chrome Webstore地址：https://chromewebstore.google.com/detail/astral-new-tab/mldjngfcllpkobkbfjildlaakkpoaadj
+Chrome Web Store：[Astral New Tab](https://chromewebstore.google.com/detail/astral-new-tab/mldjngfcllpkobkbfjildlaakkpoaadj)
 
-✨ 核心功能亮点：
+## 功能亮点
 
-🌅 Bing每日精选：每日自动更新Bing精美壁纸，随时下载高清壁纸，让你的浏览器每天都有新惊喜！
+- **Bing 壁纸**：自动更新每日壁纸，也可在最近 1–8 天的壁纸中手动切换；支持 UHD、1920×1080 和 1366×768 分辨率。
+- **壁纸下载与自定义**：可手动或自动下载壁纸，并设置下载目录；也可使用自定义图片 URL 或 Data URL。需要注意的是，自动更新与自定义壁纸互斥。
+- **天气**：查看当前天气，可使用浏览器定位或手动选择城市、编辑坐标；天气和浏览器定位均可在选项中管理。
+- **公历与农历日期**：查看公历、农历、节气及节假日信息。
+- **常用网站导航**：自定义分组和网址，自动获取网站图标，也可上传或编辑图标。
+- **配置备份与同步**：以 JSON 导入、导出配置；可开启浏览器同步，在支持同步的浏览器设备间上传或恢复导航和设置。自定义壁纸图片等本机数据不会全部上传，详见[隐私权声明](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/Privacy%20Disclaimer)。
+- **主页样式定制**：可编辑主页 CSS，调整新标签页的外观。
 
-🌤️ 实时天气预报：一键查看所在地或指定城市天气，出行计划更轻松。
+## 参考配置
 
-📅 公历农历一览：支持公历、农历、节气及节假日显示，传统与现代日程无缝衔接。
+导入[参考配置](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/myNewTabWE.json)后，可以获得如下导航布局：
 
-🔗 超强自定义链接：支持添加无数常用网站链接（自动获取相关图标信息），快速访问你喜爱的网页，效率翻倍！
+![参考配置效果](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/ScreenShot.png)
 
-💾 配置导入导出：个性化设置一键备份，跨设备同步无忧，随时随地保留你的专属体验。（[自用配置](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/myNewTabWE_lrp.json)）
+在“选项”页面中，可调整壁纸、天气、导航和同步设置：
 
-🉑️ 导入[参考配置](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/myNewTabWE.json)后，可以得到下图：
+![选项页面](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/ScreenShot2.png)
 
-![image](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/ScreenShot.png)
+## 为什么选择 Astral？
 
-👀 点击选项，可以进行个性化设置：
-
-![image](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/ScreenShot2.png)
-
-🚀 为什么选择Astral？
-
-- 轻量高效：简洁界面，流畅运行，资源占用少。
-
-- 高度自定义：从壁纸到链接，一切由你掌控。
-
-- 实用便捷：集多种实用功能于一体，打造你的专属浏览器主页。
-
+- **轻量实用**：常用导航、日期、天气与壁纸集中在新标签页中。
+- **灵活可调**：从导航分组到壁纸和主页样式，都可以按自己的习惯设置。
+- **配置可带走**：导出 JSON 备份配置，也可使用浏览器同步功能在设备间传递支持同步的数据。
