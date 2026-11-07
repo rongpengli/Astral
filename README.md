@@ -16,7 +16,7 @@
 
 导入[参考配置](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/myNewTabWE.json)后，可以获得如下导航布局：
 
-![参考配置效果]([https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/main.png])
+![参考配置效果](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/main.png)
 
 在“选项”页面中，可调整壁纸、天气、导航和同步设置：
 
