@@ -18,9 +18,9 @@ body {
 	display: flex;
 	flex-direction: column;
 	font-family: "Microsoft YaHei", sans-serif;
-	margin: 0;   /*避免容器大小100%造成的滚动条*/
+	margin: 0;   
 }
-/*上下空白高度比例1:3*/
+
 header {
 	flex-grow: 1;
 }
@@ -28,7 +28,6 @@ footer {
 	flex-grow: 3;
 }
 
-/*日历整体*/
 #date {
 	color: #1E90FF;
 	font: bold 3em Arial, "Microsoft YaHei", sans-serif;
@@ -37,46 +36,44 @@ footer {
 	text-shadow: .1em .1em .1em black;
 	z-index: 9;
 }
-/*农历*/
+
 #lunar {
 	color: #333;
 	font-size: .75em;
 	text-shadow: .1em .1em .1em silver;
 }
-/*节日*/
+
 .festival {
 	color: orangered;
 }
-/*法定假日*/
+
 .holiday {
 	color: red;
 }
 
-/*导航整体面板*/
 #navs {
 	background-color: rgba(0, 0, 0, .5);
 	backdrop-filter: blur(5px);
 	border: .1em solid gray;
 	border-radius: 1em;
-	margin-bottom: 1em;   /*导航底部保留空间*/
-	max-width: 80%;   /*最大宽度*/
+	margin-bottom: 1em;   
+	max-width: 80%;   
 	z-index: 9;
 }
-/*导航链接*/
+
 #navs a {
 	color: white;
-	outline: none;   /*不显示虚框*/
+	outline: none;   
 	text-decoration: none;
 }
-/*导航图标*/
+
 #navs img {
 	height: 1em;
-	margin-bottom: -.15em;   /*与文字对齐*/
-	margin-right: .2em;   /*与文字的间隔*/
+	margin-bottom: -.15em;   
+	margin-right: .2em;   
 	width: 1em;
 }
 
-/*导航标题*/
 #navtitle {
 	border-bottom: .15em solid rgba(123, 123, 123, .65);
 	color: rgba(255, 255, 255, .65);
@@ -84,7 +81,7 @@ footer {
 	font-weight: bold;
 	padding: .4em .8em;
 }
-/*导航标题按钮*/
+
 #navtitle a {
 	float: right;
 	opacity: .5;
@@ -94,11 +91,10 @@ footer {
 	opacity: .8;
 }
 
-/*导航表格*/
 #navtable {
 	padding: .25em 1em;
 }
-/*设置导航分类*/
+
 #navtable th {
 	color: rgba(255, 255, 255, .6);
 	padding: .3em 0;
@@ -107,14 +103,14 @@ footer {
 	vertical-align: top;
 	width: 6em;
 }
-/*设置导航单元大小*/
+
 #navtable td {
-	float: left;   /*超出自动换行*/
+	float: left;   
 	padding: .3em .2em;
 	font-size: 1.2em;
-	width: 7.2em;   /*文字长度6加上图标1和图标文字间的间隔0.2*/
+	width: 7.2em;   
 }
-/*设置导航链接*/
+
 #navtable a {
 	opacity: .8;
 }
@@ -125,23 +121,20 @@ footer {
 }
 
 
-/* Wallpaper is rendered in a dedicated layer independent of imported legacy CSS. */
 #astral-wallpaper-layer { position: fixed !important; inset: 0 !important; z-index: 0 !important; pointer-events: none !important; background-size: cover !important; background-position: center !important; }
 body > header, body > footer, body > #date, body > #navs, body > #weather-container { position: relative; z-index: 1; }
 
-/* v15: weather replaces the navigation heading; actions are grouped at right. */
 #navtitle { display:flex; align-items:center; justify-content:space-between; gap:1.5em; min-height:1.7em; }
 #navtitle #weather-container { position:static !important; display:block; flex:1 1 auto; min-width:0; max-width:none; color:rgba(255,255,255,.9); font-size:.8em; font-weight:normal; text-shadow:0 1px 3px #333; }
 #navtitle #weather-container strong { font-weight:600; }
 #navtitle .nav-actions { display:flex; flex:0 0 auto; align-items:center; gap:1.4em; }
 #navtitle .nav-actions a { float:none; display:inline-flex; align-items:center; white-space:nowrap; padding:0; }
-/* Keep controls on one row; allow weather to wrap rather than truncate. */
+
 #navtitle { flex-wrap: nowrap; }
 #navtitle #weather-container { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
 #navtitle .nav-actions { gap: clamp(.45em, 1.5vw, 1.4em); }
 #navtitle .nav-actions a { gap: .15em; }
 
-/* Responsive desktop/tablet/phone layout. Keep the original visual hierarchy. */
 #navs { width: auto; max-width: min(1080px, calc(100vw - 20px)); box-sizing: border-box; }
 #navtable { width: 100%; box-sizing: border-box; border-spacing: 0; }
 
@@ -181,8 +174,6 @@ body > header, body > footer, body > #date, body > #navs, body > #weather-contai
 }
 @media (prefers-reduced-motion: reduce) { #astral-wallpaper-layer, .astral-wallpaper-fade { transition: none !important; } }
 
-/* v26.2: At narrow viewport widths, stack each category heading above its links.
-   Preserve the original floated, fixed-width links so the column count remains fluid. */
 @media (max-width: 900px) {
   #navtable, #navtable tbody, #navtable tr { display: block; width: 100%; box-sizing: border-box; }
   #navtable tr { display: flow-root; padding: .35em 0; }
@@ -190,7 +181,6 @@ body > header, body > footer, body > #date, body > #navs, body > #weather-contai
   #navtable td { display: block; float: left; width: 7.2em; }
 }
 
-/* Compact navigation controls without hiding weather details. */
 #navtitle .nav-actions img { display: block; margin: 0; }
 #navtitle .nav-actions a { min-width: 1.4em; justify-content: center; }
 @media (max-width: 850px) {
@@ -204,7 +194,6 @@ body > header, body > footer, body > #date, body > #navs, body > #weather-contai
   #navtitle .nav-actions { gap: .35em; }
 }
 
-/* Compact weather progressively; never truncate the city or current temperature. */
 #navtitle #weather-container { overflow-wrap: normal; }
 #navtitle #weather-container .weather-temperature { white-space: nowrap; }
 @media (max-width: 760px) {
@@ -220,31 +209,21 @@ body > header, body > footer, body > #date, body > #navs, body > #weather-contai
   #navtitle #weather-container .weather-range { display: none; }
 }
 
-/* Show stale/failure state without obscuring the city and current temperature. */
 #navtitle #weather-container .weather-cache-status {font-size:.88em;opacity:.82;}
 
-/* v27.4: Width is measured from configured titles, not a fixed column count.
-   Each link keeps its favicon and title together. On extremely narrow screens,
-   cap the item at the available row width and ellipsize instead of wrapping. */
 #navtable td { width: min(var(--astral-nav-item-width, 7.2em), 100%) !important; overflow-wrap: normal; }
 #navtable td a { display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
 #navtable td img { vertical-align: baseline; }
 
-/* v27.6: Intrinsic item widths, original 1080px panel cap, fluid wrapping. */
 #navtable td a { box-sizing: border-box; }
 
-/* v27.7: 1080px baseline; expand only to fit up to six measured items, capped at 94vw. */
 #navs { max-width: min(94vw, calc(100vw - 20px)); }
 
-/* v27.8: use measured intrinsic icon-and-label width; keep automatic wrapping. */
 #navtable td { box-sizing: border-box; }
 #navtable td a { width: max-content; max-width: 100%; }
 
-/* v27.9: measure the actual complete anchor before applying truncation. */
 #navtable td a { white-space: nowrap; }
 
-/* v27.11: reserve the heading column and divide the remaining row evenly.
-   Block rows avoid the HTML table intrinsic-width algorithm interfering with floats. */
 @media (min-width: 901px) {
  #navtable, #navtable tbody { display: block; width: 100%; }
  #navtable tr { display: flow-root; position: relative; padding-left: var(--astral-nav-heading-width, 120px); box-sizing: border-box; }
@@ -252,7 +231,6 @@ body > header, body > footer, body > #date, body > #navs, body > #weather-contai
  #navtable td { float: left; width: var(--astral-nav-item-width, 7.2em) !important; }
 }
 
-/* v27.12: desktop uses equal grid tracks instead of floating table cells. */
 @media (min-width: 901px) {
  #navtable tr { display: grid; grid-template-columns: repeat(var(--astral-nav-columns, 6), minmax(0, 1fr)); padding-left: var(--astral-nav-heading-width, 115px); align-items: start; }
  #navtable th { position: absolute; top: 0; left: 0; }
@@ -260,7 +238,6 @@ body > header, body > footer, body > #date, body > #navs, body > #weather-contai
  #navtable td a { display: inline-block; max-width: 100%; vertical-align: middle; }
 }
 
-/* v27.13: single layout authority; tracks share available space exactly. */
 @media (min-width: 901px) {
  #navtable tr { grid-template-columns: repeat(var(--astral-nav-columns, 6), minmax(0, 1fr)) !important; }
  #navtable td { width: 100% !important; min-width: 0; padding-inline: .2em; }
@@ -268,7 +245,6 @@ body > header, body > footer, body > #date, body > #navs, body > #weather-contai
  #navtable td img { flex: 0 0 auto; }
 }
 
-/* v27.14: remove table-cell intrinsic spacing from the desktop grid. */
 @media (min-width: 901px) {
  #navtable { table-layout: fixed; border-collapse: collapse; }
  #navtable tr { column-gap: 0 !important; row-gap: 0; }
@@ -276,8 +252,6 @@ body > header, body > footer, body > #date, body > #navs, body > #weather-contai
  #navtable td a { box-sizing: border-box; min-width: 0; }
 }
 
-/* v27.17: stacked headings occupy their own grid row on narrow viewports.
-   The panel shrinks to the measured number of tracks; no phantom heading column. */
 @media (max-width: 900px) {
  #navtable, #navtable tbody { display: block; box-sizing: border-box; width: 100%; }
  #navtable tr { display: grid; float: none; width: 100%; box-sizing: border-box;
@@ -291,7 +265,6 @@ body > header, body > footer, body > #date, body > #navs, body > #weather-contai
    max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 
-/* Extension documents default to smaller fonts than regular web pages. */
 html {font-size:16px;}
 body {font-size:16px;}
 #navtable td {font-size:18px;line-height:1.5;}
@@ -304,34 +277,8 @@ body {font-size:16px;}
 @media(max-width:850px){#navtitle .action-icon{width:1.15em;height:1.15em;}}
 @media(max-width:600px){#navtable td{font-size:16px;}#navtable th{font-size:16px;}#navtitle #weather-container{font-size:14px;}#navtitle .nav-actions{font-size:14px;}}
 
-/* Center the favicon box and text line box together at every viewport width. */
 #navtable td a {display:inline-flex!important;align-items:center!important;gap:.25em;line-height:1.5;vertical-align:middle;}
 #navtable td a img {display:block;flex:0 0 auto;margin:0!important;vertical-align:middle;}
 #navtitle .nav-actions a {align-items:center;line-height:1.5;}
 
 #change-wallpaper[hidden], #download-wallpaper[hidden] {display:none!important;}
-
-#astral-wallpaper-layer[data-gradient] {
- --start-lightness: 74%;
- --middle-lightness: 80%;
- --end-lightness: 85%;
- --chroma: .068;
- background-image: linear-gradient(var(--gradient-angle),
-   oklch(var(--start-lightness) var(--chroma) calc(var(--gradient-hue) - var(--gradient-step))),
-   oklch(var(--middle-lightness) var(--chroma) var(--gradient-hue)) 52%,
-   oklch(var(--end-lightness) var(--chroma) calc(var(--gradient-hue) + var(--gradient-step))));
-}
-#astral-wallpaper-layer[data-gradient] ~ #date,
-#astral-wallpaper-layer[data-gradient] ~ #date #lunar {color:#233040;text-shadow:none;}
-#astral-wallpaper-layer[data-gradient] ~ #date .festival {color:#762b34;}
-@media (prefers-color-scheme: dark) {
- #astral-wallpaper-layer[data-gradient] {
-  --start-lightness: 25%;
-  --middle-lightness: 31%;
-  --end-lightness: 38%;
-  --chroma: .048;
- }
- #astral-wallpaper-layer[data-gradient] ~ #date,
- #astral-wallpaper-layer[data-gradient] ~ #date #lunar {color:#edf0f5;}
- #astral-wallpaper-layer[data-gradient] ~ #date .festival {color:#ffcfbc;}
-}

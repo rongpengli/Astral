@@ -1,4 +1,9 @@
-/* One shared control scale for homepage, wallpaper, weather, sync and auxiliary rows. */
+/**************************************************
+*   by rongpengli
+*   https://github.com/rongpengli/
+*   Fork from sakuyaa's Firefox Extension myNewTabWE.
+*   https://github.com/sakuyaa/
+**************************************************/
 :root {font-size:16px;color-scheme:light dark;--control-height:26px;--control-border:#aaa;--control-bg:#f9f9f9;--text:#222;--muted:#666;--page-bg:#eee;--panel-bg:#eee;--header-bg:#ddd;--hover-bg:#ddd;--active-bg:#ccc;--line:#aaa;--check-bg:#fafafa;--check-mark:#666;--default-dir:#999;--edited-dir:#000;}
 * {box-sizing:border-box;}
 body {margin:24px 40px;background:var(--page-bg);color:var(--text);font:14px/1.5 Arial,"Microsoft YaHei",sans-serif;}
@@ -12,7 +17,7 @@ input:not([type="radio"]):not([type="checkbox"]):not([type="file"]) {min-width:0
 select {padding:0 5px;cursor:pointer;}
 input::placeholder {color:#999;opacity:1;}
 input:focus-visible,select:focus-visible,button:focus-visible,textarea:focus-visible,a:focus-visible {outline:2px solid #888;outline-offset:2px;}
-/* Draw both choices at the same size rather than mixing platform widget metrics. */
+
 input[type="checkbox"],input[type="radio"] {appearance:none;-webkit-appearance:none;display:inline-grid;place-content:center;flex:0 0 14px;width:14px;height:14px;min-width:14px;padding:0;margin:0;border:1px solid #888;background:var(--check-bg);vertical-align:middle;cursor:pointer;}
 input[type="checkbox"] {border-radius:3px;}
 input[type="radio"] {border-radius:50%;}
@@ -69,7 +74,6 @@ th,td {padding:5px;text-align:left;vertical-align:middle;}
 .group-table td {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 
-
 .group-table img {width:20px;height:20px;object-fit:contain;vertical-align:middle;}
 .group-table button {margin-right:4px;padding:0 8px;}
 #edit-modal,#group-modal,#defaults-modal {position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;background:#0009;}
@@ -95,7 +99,6 @@ button {-webkit-tap-highlight-color:transparent;}
 
 @media(max-width:600px){#edit-modal .icon-editor{gap:4px;}#edit-modal .icon-editor button{padding:0 6px;font-size:12px;}}
 
-/* Follow the operating system appearance without changing the saved settings. */
 @media (prefers-color-scheme: dark) {
  :root {color-scheme:dark;--control-border:#5c6068;--control-bg:#292c32;--text:#e5e7eb;--muted:#a8adb7;--page-bg:#181a1f;--panel-bg:#22252b;--header-bg:#2d3037;--hover-bg:#363a43;--active-bg:#414651;--line:#4b4f58;--check-bg:#292c32;--check-mark:#aeb5c2;--default-dir:#a8adb7;--edited-dir:#f1f3f5;}
  .group {border-color:var(--control-border);}
@@ -111,14 +114,12 @@ button {-webkit-tap-highlight-color:transparent;}
  #astral-toast {border:1px solid var(--control-border);box-shadow:0 4px 16px #0006;}
 }
 
-/* Align the cropped logo and its title at every text size. */
 #logo a {display:inline-flex;align-items:center;justify-content:center;gap:.35em;line-height:1.25;opacity:1;max-width:100%;}
 #logo img {display:block;flex:0 0 auto;width:1.3em;height:1.3em;object-fit:contain;}
 
 #settings-fields {border:0;padding:0;margin:0;min-width:0;}
 #settings-fields:disabled {visibility:hidden;}
 
-/* Wrap by the actual space available to the row, keeping all four actions intact. */
 #sites > .group > .content {overflow-x:visible;}
 .group-table,.group-table tbody {display:block;width:100%;min-width:0;border:0;}
 .group-table tr {display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;border:0;padding:8px 0;}

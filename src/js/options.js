@@ -6,7 +6,6 @@
 **************************************************/
 'use strict';
 
-//简化函数
 const $id = id => { const element=document.getElementById(id); if(!element) throw new Error('缺少页面元素 #'+id+'，请强制刷新以更新 HTML 和 JS'); return element; };
 
 let upload = $id('upload');
@@ -17,11 +16,9 @@ let myNewTabWE = {
 
 	notify: (message,title) => AstralStore.notify(message,title),
 
-	//获取参数
  getStorage: async () => {await AstralStore.ready;const data=AstralStore.read();myNewTabWE.config=data.config;myNewTabWE.sites=data.sites},
  setStorage: isConfig => {try{const saved=AstralStore.write(isConfig?{config:myNewTabWE.config}:{sites:myNewTabWE.sites});if(isConfig)myNewTabWE.config=saved.config;const el=document.getElementById('save-status');if(el){el.textContent='保存中…';clearTimeout(myNewTabWE.saveStatusTimer);myNewTabWE.saveStatusTimer=setTimeout(()=>el.textContent='',1800)}return true}catch(e){const el=document.getElementById('save-status');if(el)el.textContent='保存失败';const previous=AstralStore.read();myNewTabWE.config=previous.config;myNewTabWE.sites=previous.sites;AstralStore.notify(e.message,'保存失败');queueMicrotask(()=>{myNewTabWE.initConf();myNewTabWE.renderSites()});return false}},
 
- //初始化导入导出功能
  initImportExport: () => {
   $id('import').addEventListener('click',()=>{if($id('import').disabled)return;upload.value='';upload.accept='.json,application/json';upload.onchange=async()=>{if(!upload.files?.[0])return;$id('import').disabled=true;try{
     const json=JSON.parse(await upload.files[0].text());
@@ -66,7 +63,7 @@ let myNewTabWE = {
    finally{button.disabled=false}
   });
  },
- //初始化选项
+
 	initConf: () => {
 		$id('newtab-open').checked = myNewTabWE.config.newTabOpen;
 		$id('wallpaper-resolution').value = String(myNewTabWE.config.useBigImage);
@@ -80,7 +77,7 @@ let myNewTabWE = {
   $id('native-location-controls').hidden=weatherMode!=='native';
   const auto=myNewTabWE.config.weatherLocationMode==='auto';$id('location-auto').checked=auto;$id('location-manual').checked=!auto;$id('weather-manual-fields').hidden=auto;$id('location-refresh').hidden=!auto;$id('location-status').textContent=auto?'使用已保存的位置坐标':'';
 	},
-	//初始化导航网址
+
 	renderSites: () => {
         const container=$id('sites');
         // The template must not be deleted when rebuilding after an import.
@@ -101,7 +98,7 @@ let myNewTabWE = {
             $id('sites').lastElementChild?.scrollIntoView({behavior:'smooth',block:'end'});
         });
 	},
-	//初始化编辑界面
+
 	initEdit: () => {
         $id('edit-upload').addEventListener('click',()=>{
             upload.value='';upload.accept='image/png,image/jpeg,image/webp,image/gif';
@@ -147,7 +144,6 @@ let myNewTabWE = {
 		myNewTabWE.initEdit();
 	},
 
-	//初始化选项事件
 	confListener: () => {
         $id('config-default').addEventListener('click',async()=>{
             if(myNewTabWE.editing||!await myNewTabWE.confirmDefaults())return;

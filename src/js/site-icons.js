@@ -1,3 +1,7 @@
+/**************************************************
+*   by rongpengli
+*   https://github.com/rongpengli/
+**************************************************/
 /* Resolve automatic icons from each website, without a third-party favicon proxy. */
 'use strict';
 const AstralIcons = (() => {

@@ -1,3 +1,7 @@
+/**************************************************
+*   by rongpengli
+*   https://github.com/rongpengli/
+**************************************************/
 'use strict';
 const ASTRAL_DEFAULTS = {
  config:{newTabOpen:true,title:'Astral 新标签页',useBigImage:2,bingMaxHistory:8,weatherLatitude:39.9042,weatherLongitude:116.4074,weatherCity:'北京',weatherMode:'native',weatherLocationMode:'manual'},
@@ -36,7 +40,7 @@ const AstralSchema=(()=>{
   for(const k of ['newTabOpen'])if(typeof config[k]!=='boolean')throw Error(k+' 类型错误');
   config.useBigImage=[0,1,2].includes(Number(config.useBigImage))?Number(config.useBigImage):2;
   // Original extension: maximum recent Bing images available to the manual switch button.
-  // v13's wallpaperIntervalDays had a different (incorrect) meaning; do not migrate it.
+
   config.bingMaxHistory=Number.isInteger(Number(config.bingMaxHistory))&&Number(config.bingMaxHistory)>=1&&Number(config.bingMaxHistory)<=8?Number(config.bingMaxHistory):8;
   if(config.autoChange){
    delete config.bingCacheLimit;

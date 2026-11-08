@@ -1,4 +1,7 @@
-/* Astral Sync v1: classic script, MV3 service worker compatible. */
+/**************************************************
+*   by rongpengli
+*   https://github.com/rongpengli/
+**************************************************/
 'use strict';
 const AstralSync = (() => {
   const PREFIX = 'astral:v1:';

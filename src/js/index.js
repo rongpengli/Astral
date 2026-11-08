@@ -1,4 +1,9 @@
-/* Astral static homepage. Original calendar, navigation and CSS semantics preserved. */
+/**************************************************
+*   by rongpengli
+*   https://github.com/rongpengli/
+*   Fork from sakuyaa's Firefox Extension myNewTabWE.
+*   https://github.com/sakuyaa/
+**************************************************/
 'use strict';
 const $id=id=>document.getElementById(id);
 const myNewTabWE={config:{},sites:[],css:{},busy:false,

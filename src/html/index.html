@@ -14,13 +14,24 @@
 
         <meta name="color-scheme" content="light dark">
         <style>
-          html {background:#e6e9f1;color-scheme:light dark;}
-          html body {background-color:#e6e9f1;background-image:linear-gradient(125deg,#dce6ef,#e6e0ef,#eee1e5);}
-          html[data-astral-loading] #date,html[data-astral-loading] #navs {visibility:hidden;}
-          @media(prefers-color-scheme:dark){
-            html {background:#242733;}
-            html body {background-color:#242733;background-image:linear-gradient(125deg,#202c3c,#323044,#42323f);}
+          :root {
+            color-scheme:light dark;
+            --gradient-start:#354d68;
+            --gradient-middle:#5d5978;
+            --gradient-end:#876779;
+            background-color:var(--gradient-start);
           }
+          @media (prefers-color-scheme:dark) {
+            :root {
+              --gradient-start:#202e40;
+              --gradient-middle:#37364b;
+              --gradient-end:#513e50;
+            }
+          }
+          html body, #astral-wallpaper-layer[data-gradient] {
+            background-image:linear-gradient(120deg,var(--gradient-start),var(--gradient-middle) 56%,var(--gradient-end));
+          }
+          html[data-astral-loading] #date, html[data-astral-loading] #navs {visibility:hidden;}
         </style>
         <link rel="stylesheet" data-astral-base-css="1" href="../css/index.css">
 </head>

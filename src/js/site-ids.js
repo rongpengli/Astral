@@ -1,3 +1,7 @@
+/**************************************************
+*   by rongpengli
+*   https://github.com/rongpengli/
+**************************************************/
 /* Assign stable navigation identities without changing existing IDs or other fields. */
 'use strict';
 const AstralSiteIds={

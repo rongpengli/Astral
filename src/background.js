@@ -1,3 +1,7 @@
+/**************************************************
+*   by rongpengli
+*   https://github.com/rongpengli/
+**************************************************/
 /* Manifest V3 background service worker */
 importScripts('js/compat.js','js/config-schema.js','js/site-icons.js', 'js/site-ids.js', 'js/sync.js');
 AstralSync.listen();

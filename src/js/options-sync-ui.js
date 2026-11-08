@@ -1,3 +1,7 @@
+/**************************************************
+*   by rongpengli
+*   https://github.com/rongpengli/
+**************************************************/
 /* Compact sync controls share the same row and native selects as other options. */
 'use strict';
 (async()=>{

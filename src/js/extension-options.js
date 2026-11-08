@@ -1,3 +1,7 @@
+/**************************************************
+*   by rongpengli
+*   https://github.com/rongpengli/
+**************************************************/
 'use strict';
 (async()=>{
  await AstralStore.ready;

@@ -1,3 +1,9 @@
+/**************************************************
+*   by rongpengli
+*   https://github.com/rongpengli/
+*   Fork from sakuyaa's Firefox Extension myNewTabWE.
+*   https://github.com/sakuyaa/
+**************************************************/
 /* Homepage CSS editor. Weather customization is no longer supported. */
 'use strict';
 const $id=id=>document.getElementById(id);

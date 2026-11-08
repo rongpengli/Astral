@@ -1,4 +1,7 @@
-/* Bing recent wallpapers for static hosting: CORS-aware metadata, validated fallback and IndexedDB cache. */
+/**************************************************
+*   by rongpengli
+*   https://github.com/rongpengli/
+**************************************************/
 'use strict';
 const AstralWallpaper=(()=>{
  const DB='astral-wallpaper-v1', STORE='images', META='astral.bing.metadata.v2', CURRENT='astral.wallpaper.current';
@@ -78,14 +81,6 @@ const AstralWallpaper=(()=>{
  function showGradient(token){
   if(!current(token))return;
   const layer=backgroundLayer();
-  // Keep the palette stable until the next page load, including theme changes.
-  if(!layer.style.getPropertyValue('--gradient-hue')){
-   const hue=Math.floor(Math.random()*360);
-   const step=16+Math.floor(Math.random()*15);
-   layer.style.setProperty('--gradient-hue',String(hue));
-   layer.style.setProperty('--gradient-step',String(step));
-   layer.style.setProperty('--gradient-angle',(105+Math.floor(Math.random()*41))+'deg');
-  }
   layer.dataset.gradient='';
   layer.style.removeProperty('background-image');
   if(activeUrl)URL.revokeObjectURL(activeUrl);

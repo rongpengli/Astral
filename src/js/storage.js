@@ -1,3 +1,7 @@
+/**************************************************
+*   by rongpengli
+*   https://github.com/rongpengli/
+**************************************************/
 /* Shared, versioned local configuration; obsolete weather fields are discarded. */
 'use strict';
 const AstralStore=(()=>{

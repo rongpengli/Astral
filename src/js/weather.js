@@ -1,3 +1,7 @@
+/**************************************************
+*   by rongpengli
+*   https://github.com/rongpengli/
+**************************************************/
 /* Open-Meteo weather: browser-side CORS API, no API key. */
 'use strict';
 const AstralWeather=(()=>{

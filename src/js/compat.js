@@ -1,3 +1,7 @@
+/**************************************************
+*   by rongpengli
+*   https://github.com/rongpengli/
+**************************************************/
 /* One legacy-compatible storage schema; namespaced aliases are accepted for older JSON files. */
 'use strict';
 const AstralCompat=(()=>{
