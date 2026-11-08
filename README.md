@@ -3,7 +3,9 @@
 [Astral New Tab](https://chromewebstore.google.com/detail/astral-new-tab/mldjngfcllpkobkbfjildlaakkpoaadj) 是一款面向 Chrome 的新标签页扩展，它将常用网站、日期、天气与壁纸整合在一个简洁的新标签页中，让日常浏览更顺手。Astral New Tab 基于 [sakuyaa 开发的 myNewTabWE Firefox 插件](https://github.com/sakuyaa/myNewTabWE) 进行功能扩展，感谢 sakuyaa 为 myNewTabWE Firefox 版所做的贡献<sup>*</sup>。
 
 ## 功能亮点
-
+![](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/navigation-1280x800.png)
+![](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/settings-1280x800.png)
+![](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/wallpaper-1280x800.png)
 - **Bing 壁纸**：自动更新每日壁纸，也可在最近 1–8 天的壁纸中手动切换；支持 UHD、1920×1080 和 1366×768 分辨率。
 - **壁纸下载与自定义**：可手动或自动下载壁纸，并设置下载目录；也可使用自定义图片 URL 或 Data URL。
 - **天气**：查看当前天气，可使用浏览器定位或手动选择城市、编辑坐标；天气和浏览器定位均可在选项中管理。
