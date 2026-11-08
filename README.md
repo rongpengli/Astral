@@ -1,4 +1,4 @@
-# Astral New Tab 星辰新标签页 by rongpengli
+# Astral 星辰新标签页 by rongpengli
 ![](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/marquee-1400x560.png)
 [Astral New Tab](https://chromewebstore.google.com/detail/astral-new-tab/mldjngfcllpkobkbfjildlaakkpoaadj) 是一款面向 Chrome 的新标签页扩展，它将常用网站、日期、天气与壁纸整合在一个简洁的新标签页中，让日常浏览更顺手。Astral New Tab 基于 [sakuyaa 开发的 myNewTabWE Firefox 插件](https://github.com/sakuyaa/myNewTabWE) 进行功能扩展，感谢 sakuyaa 为 myNewTabWE Firefox 版所做的贡献<sup>*</sup>。
 
