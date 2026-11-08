@@ -242,8 +242,10 @@ const AstralStore=(()=>{
  let snapshot=validate({}), pending=Promise.resolve(), initialized=false, writes=0;
  const KEYS=['config','sites','css'];
  const ready=(async()=>{
-  await AstralSchema.loadDefaults();
   let raw=await chrome.storage.local.get([...KEYS,'__astralExtensionBuild','__astralBefore1125']);
+  const complete=raw.config&&Array.isArray(raw.sites)&&raw.css&&
+   Object.keys(ASTRAL_DEFAULTS.config).every(key=>Object.hasOwn(raw.config,key));
+  if(!complete)await AstralSchema.loadDefaults();
   if(raw.__astralExtensionBuild!==BUILD){
    // Retain an exact, local pre-upgrade snapshot, including obsolete wallpaper fields.
    await chrome.storage.local.set({__astralBefore1125:raw.__astralBefore1125||{at:Date.now(),config:raw.config||{},sites:raw.sites||[],css:raw.css||{}},__astralExtensionBuild:BUILD});
@@ -252,11 +254,15 @@ const AstralStore=(()=>{
    iconCache={};
    if(localStorage.getItem('astral.wallpaper.legacy-pin')===null)localStorage.setItem('astral.wallpaper.legacy-pin',AstralCompat.config(raw.config||{}).autoChange===false&&localStorage.getItem('imageSrc')?'1':'0');
   }
-  const readyResult=await chrome.runtime.sendMessage({type:'ASTRAL_SYNC_READY'});
-  if(!readyResult?.ok)throw Error(readyResult?.error||'配置初始化失败');
+  if(!raw.config||!Array.isArray(raw.sites)||!raw.css){
+   const result=await chrome.runtime.sendMessage({type:'ASTRAL_LOCAL_READY'});
+   if(!result?.ok)throw Error(result?.error||'配置初始化失败');
+  }
   raw=await chrome.storage.local.get(KEYS);
-  const canonical=AstralCompat.storage(raw.config||{});if(!AstralCompat.equal(canonical,raw.config||{})){await chrome.storage.local.set({config:canonical});raw.config=canonical}
+  const canonical=AstralCompat.storage(validate(raw).config);delete canonical.syncEnabled;if(!AstralCompat.equal(canonical,raw.config||{})){await chrome.storage.local.set({config:canonical});raw.config=canonical}
   snapshot=validate(raw);initialized=true;
+  // Render the local snapshot now. Later cloud changes arrive through onChanged.
+  void chrome.runtime.sendMessage({type:'ASTRAL_SYNC_READY'}).catch(error=>console.info('后台同步初始化未成功',error));
   // Do not rewrite settings on every new tab or invalidate a sync merge base.
   return snapshot;
  })();

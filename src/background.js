@@ -13,6 +13,12 @@ chrome.runtime.onInstalled.addListener(initialize);
 chrome.runtime.onStartup.addListener(initialize);
 initialize().catch(console.error);
 
+// First installation only waits for local preset creation, never cloud access.
+chrome.runtime.onMessage.addListener((message,sender,sendResponse)=>{
+ if(message?.type!=='ASTRAL_LOCAL_READY')return;
+ AstralSync.prepareLocal().then(()=>sendResponse({ok:true}),error=>sendResponse({ok:false,error:String(error.message||error)}));
+ return true;
+});
 // New tabs can request an initial cloud-to-local reconciliation before rendering.
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type !== 'ASTRAL_SYNC_READY') return;

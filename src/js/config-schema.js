@@ -55,7 +55,7 @@ const AstralSchema=(()=>{
  }
 
  async function loadDefaults(){
-  const response=await fetch(chrome.runtime.getURL('AstralNewTab.json'));
+  const response=await fetch(chrome.runtime.getURL('AstralNewTab.json'),{signal:AbortSignal.timeout(10000)});
   if(!response.ok)throw Error('无法读取扩展预设 AstralNewTab.json');
   const raw=await response.json();
   if(!plain(raw.config)||!Array.isArray(raw.sites))throw Error('默认配置不完整，请检查选项和导航设置。');

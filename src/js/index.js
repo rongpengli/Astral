@@ -2,7 +2,7 @@
 'use strict';
 const $id=id=>document.getElementById(id);
 const myNewTabWE={config:{},sites:[],css:{},busy:false,
- initCss(){let link=document.querySelector('link[data-astral-base-css]');if(!link){link=document.createElement('link');link.dataset.astralBaseCss='1';link.rel='stylesheet';link.href='../css/index.css';document.head.append(link);}let style=$id('astral-index-custom');if(!style){style=document.createElement('style');style.id='astral-index-custom';document.head.append(style)}style.textContent=this.css.index||'';requestAnimationFrame(()=>this.updateNavItemWidth())},
+ initCss(){let style=$id('astral-index-custom');if(!style){style=document.createElement('style');style.id='astral-index-custom';document.head.append(style)}style.textContent=this.css.index||'';if(this.renderedSites)requestAnimationFrame(()=>this.updateNavItemWidth())},
  initDate(){let d=Solar.getSolar(new Date());$id('solar-date').textContent=d.date;$id('solar-festival').textContent=d.festival;$id('solar-holiday').textContent=d.holiday;d=Lunar.getLunar(new Date());$id('lunar-date').textContent=d.date;$id('lunar-festival').textContent=d.festival;$id('lunar-holiday').textContent=d.holiday},
  buildTr(group){const tr=document.createElement('tr'),th=document.createElement('th');th.textContent=group.name;tr.append(th);for(const site of group.list){const td=document.createElement('td'),a=document.createElement('a'),img=document.createElement('img');if(!/^https?:\/\//i.test(site.url)&&!/^mailto:/i.test(site.url))continue;a.href=site.url;if(this.config.newTabOpen){a.target='_blank';a.rel='noopener noreferrer'}AstralStore.setFavicon(img,site,'../image/default.svg');a.append(img,document.createTextNode(site.title));td.append(a);tr.append(td)}return tr},
  // Aim for six items per row on desktop. Preserve the original 1080px
@@ -181,16 +181,11 @@ const myNewTabWE={config:{},sites:[],css:{},busy:false,
   await AstralStore.ready;
   const data=AstralStore.read();this.config=data.config;this.sites=data.sites;this.css=data.css;
   document.title=this.config.title;this.initCss();this.initDate();this.initSites();
+  requestAnimationFrame(()=>{
+   document.documentElement.removeAttribute('data-astral-loading');
+  });
   const scheduleNavLayout=()=>{cancelAnimationFrame(this.navResizeFrame);this.navResizeFrame=requestAnimationFrame(()=>this.updateNavItemWidth())};
   addEventListener('resize',scheduleNavLayout);
-  // index.css is injected dynamically by initCss(). Its first load can finish
-  // after initSites(), so measuring immediately uses incomplete styles. A warm
-  // reload and a new tab can therefore choose different column counts.
-  const stylesheet=[...document.querySelectorAll('link[rel="stylesheet"]')].find(link=>link.href.includes('/css/index.css'));
-  if(stylesheet){
-   if(stylesheet.sheet){scheduleNavLayout()}
-   else{stylesheet.addEventListener('load',scheduleNavLayout,{once:true});stylesheet.addEventListener('error',scheduleNavLayout,{once:true})}
-  }
   if(document.fonts){document.fonts.ready.then(scheduleNavLayout).catch(()=>{});document.fonts.addEventListener?.('loadingdone',scheduleNavLayout)}
   addEventListener('load',scheduleNavLayout,{once:true});
   this.initListeners();this.initImage();AstralWeather.refresh(this.config);
@@ -204,4 +199,4 @@ const myNewTabWE={config:{},sites:[],css:{},busy:false,
   }
  }
 };
-myNewTabWE.init().catch(e=>{console.error('Astral 首页初始化失败',e);AstralStore.notify(e.message+'（请查看控制台中的错误位置）','初始化失败')});
+myNewTabWE.init().catch(e=>{document.documentElement.removeAttribute('data-astral-loading');console.error('Astral 首页初始化失败',e);AstralStore.notify(e.message+'（请查看控制台中的错误位置）','初始化失败')});

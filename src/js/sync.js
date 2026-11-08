@@ -410,19 +410,27 @@ const AstralSync = (() => {
     const data=await AstralSchema.loadDefaults();
     return {config:AstralCompat.storage(data.config), sites:AstralSiteIds.normalize(data.sites), css:data.css};
   }
-  function bootstrap(){
-    if(commandActive)return commandQueue.catch(()=>{});
-    if(bootstrapping)return bootstrapping;
+  let preparingLocal=null;
+  function prepareLocal(){
+    if(preparingLocal)return preparingLocal;
     const task=(async()=>{
-      await AstralSchema.loadDefaults();
       const previous=await local.get([...KEYS,META,DEFAULTS_KEY]);
-      if(!Object.keys(previous).length){
+      if(!KEYS.some(key=>Object.hasOwn(previous,key))){
         const preset=await readPreset();
         const enabled=preset.config.syncEnabled ?? true;
         delete preset.config.syncEnabled;
         await local.set({...preset,[DEFAULTS_KEY]:DEFAULTS_REVISION,
           [META]:{enabled,userDisabled:!enabled,presetInstall:enabled,pending:false,status:enabled?'pending':'off',deviceId:id()}});
       }
+    })();
+    preparingLocal=task.catch(error=>{preparingLocal=null;throw error});
+    return preparingLocal;
+  }
+  function bootstrap(){
+    if(commandActive)return commandQueue.catch(()=>{});
+    if(bootstrapping)return bootstrapping;
+    const task=(async()=>{
+      await prepareLocal();
       const s=await state();
       if(s.enabled&&!s.userDisabled&&!s.importBlocked)await runCore().catch(()=>{});
     })();
@@ -497,5 +505,5 @@ const AstralSync = (() => {
     const s=await state();
     if(s.enabled && (!s.nextRetry || Date.now()>=s.nextRetry)) await run();
   }
-  return {command,state,enable,disable,bootstrap,run,tick,listen,forceUpload,forceDownload,importConfig,readRemote,filter};
+  return {prepareLocal,command,state,enable,disable,bootstrap,run,tick,listen,forceUpload,forceDownload,importConfig,readRemote,filter};
 })();
