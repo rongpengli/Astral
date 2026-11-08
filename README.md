@@ -12,16 +12,6 @@
 - **配置备份与同步**：以 JSON 导入、导出配置；可开启浏览器同步，在支持同步的浏览器设备间上传或恢复导航和设置。自定义壁纸图片等本机数据不会全部上传，详见[隐私权声明](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/Privacy%20Disclaimer)。
 - **主页样式定制**：可编辑主页 CSS，调整新标签页的外观。
 
-## 参考配置
-
-使用[参考配置](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/src/AstralNewTab.json)后，可以获得如下导航布局：
-
-![参考配置效果](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/main.png)
-
-在“选项”页面中，可调整壁纸、天气、导航和同步设置：
-
-![选项页面](https://raw.githubusercontent.com/rongpengli/Astral/refs/heads/master/images/settings.png)
-
 ## 为什么选择 Astral？
 
 - **轻量实用**：常用导航、日期、天气与壁纸集中在新标签页中。
