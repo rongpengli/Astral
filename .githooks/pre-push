@@ -1,0 +1,66 @@
+
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Only synchronize when pushing to origin/web
+if [[ "${1:-}" != "origin" ]]; then
+  exit 0
+fi
+
+SHOULD_SYNC=false
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [[ "$remote_ref" == "refs/heads/web" &&
+        "$local_sha" != "0000000000000000000000000000000000000000" ]]; then
+    SHOULD_SYNC=true
+  fi
+done
+
+if [[ "$SHOULD_SYNC" != true ]]; then
+  exit 0
+fi
+
+ROOT="$(git rev-parse --show-toplevel)"
+HEXO_ROOT="$HOME/Downloads/hexo"
+DEST="$HEXO_ROOT/source/astral"
+CONFIG="$ROOT/AstralNewTab.website.json"
+
+# Validate prerequisites
+if [[ ! -f "$HEXO_ROOT/_config.yml" ||
+      ! -d "$HEXO_ROOT/source" ]]; then
+  echo "ERROR: Hexo project not found" >&2
+  exit 1
+fi
+
+if [[ ! -f "$CONFIG" ]]; then
+  echo "ERROR: Missing website config: $CONFIG" >&2
+  exit 1
+fi
+
+if ! python3 -m json.tool "$CONFIG" >/dev/null; then
+  echo "ERROR: Invalid website JSON" >&2
+  exit 1
+fi
+
+if [[ -L "$DEST" ]]; then
+  echo "ERROR: Destination must not be a symlink" >&2
+  exit 1
+fi
+
+mkdir -p "$DEST"
+
+echo "Synchronizing Astral to local Hexo..."
+
+rsync -a --delete \
+  --exclude='/.git/' \
+  --exclude='/.github/' \
+  --exclude='/.githooks/' \
+  --exclude='/.gitignore' \
+  --exclude='/setup-hooks.sh' \
+  --exclude='/AstralNewTab.json' \
+  --exclude='/AstralNewTab.website.json' \
+  "$ROOT/" "$DEST/"
+
+cp "$CONFIG" "$DEST/AstralNewTab.json"
+
+echo "Astral synchronized successfully."
