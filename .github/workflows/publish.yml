@@ -1,5 +1,5 @@
 name: Publish browser extension
-run: python -m pip install requests
+
 on:
   workflow_dispatch:
     inputs:
@@ -8,13 +8,16 @@ on:
         required: true
         type: string
       target:
-        description: 'Target stores'
+        description: 'Store(s) to publish'
         required: true
         default: both
         type: choice
-        options: [both, chrome, edge]
+        options:
+          - both
+          - chrome
+          - edge
       upload_only:
-        description: 'Upload package without submitting for review'
+        description: 'Upload only; do not submit for review or create a Release'
         required: true
         default: true
         type: boolean
@@ -28,98 +31,150 @@ concurrency:
 
 jobs:
   build:
+    name: Validate and package
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - id: version
+
+      - name: Install dependencies
+        run: python -m pip install requests
+
+      - name: Validate version
+        id: version
         env:
           EXPECTED_VERSION: ${{ inputs.expected_version }}
         run: |
-          python - <<'PY' >> "$GITHUB_OUTPUT"
+          python - <<'PY'
           import json, os, re
-          v=json.load(open('src/manifest.json', encoding='utf-8'))['version']
-          assert re.fullmatch(r'\d+(?:\.\d+){1,3}',v), 'Invalid version'
-          assert v == os.environ['EXPECTED_VERSION'], f'Version mismatch: {v}'
-          print(f'version={v}')
+          from pathlib import Path
+          manifest = json.loads(Path('src/manifest.json').read_text(encoding='utf-8'))
+          version = manifest['version']
+          expected = os.environ['EXPECTED_VERSION']
+          if not re.fullmatch(r'\d+(?:\.\d+){1,3}', expected):
+              raise SystemExit('Invalid expected_version')
+          if version != expected:
+              raise SystemExit(f'Version mismatch: manifest={version}, expected={expected}')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as out:
+              out.write(f'version={version}\n')
+          print(f'Validated version: {version}')
           PY
-      - name: Check release/tag does not already exist
-        if: ${{ !inputs.upload_only && inputs.target == 'both' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/v${VERSION}" >/dev/null 2>&1; then
-            echo "Tag v${VERSION} already exists"; exit 1
-          fi
-          if gh release view "v${VERSION}" >/dev/null 2>&1; then
-            echo "Release v${VERSION} already exists"; exit 1
-          fi
+
       - name: Build shared ZIP
         env:
           EXPECTED_VERSION: ${{ steps.version.outputs.version }}
-        run: python scripts/release.py build --source src --output "dist/astral-${EXPECTED_VERSION}.zip"
-      - uses: actions/upload-artifact@v4
+        run: |
+          mkdir -p dist
+          python scripts/release.py build --source src --output "dist/astral-${EXPECTED_VERSION}.zip"
+          python - <<'PY'
+          import json, os, zipfile
+          from pathlib import Path
+          version = os.environ['EXPECTED_VERSION']
+          package = Path(f'dist/astral-{version}.zip')
+          with zipfile.ZipFile(package) as archive:
+              if 'manifest.json' not in archive.namelist():
+                  raise SystemExit('ZIP root must contain manifest.json')
+              packaged_version = json.loads(archive.read('manifest.json'))['version']
+              if packaged_version != version:
+                  raise SystemExit(f'ZIP version mismatch: {packaged_version}')
+          print(f'Package verified: {package}')
+          PY
+          cd dist
+          sha256sum "astral-${EXPECTED_VERSION}.zip" > SHA256SUMS.txt
+
+      - name: Upload shared package artifact
+        uses: actions/upload-artifact@v4
         with:
           name: extension-package
-          path: dist/*.zip
+          path: |
+            dist/astral-${{ steps.version.outputs.version }}.zip
+            dist/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 7
 
-  chrome:
-    if: ${{ inputs.target == 'both' || inputs.target == 'chrome' }}
+  publish-chrome:
+    name: Upload / publish Chrome
     needs: build
+    if: ${{ inputs.target == 'both' || inputs.target == 'chrome' }}
     runs-on: ubuntu-latest
     environment: extension-release
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m pip install requests
-      - uses: actions/download-artifact@v4
+
+      - name: Install dependencies
+        run: python -m pip install requests
+
+      - name: Download shared ZIP
+        uses: actions/download-artifact@v4
         with:
           name: extension-package
           path: release-artifact
-      - name: Upload / submit Chrome
+
+      - name: Verify package checksum
+        working-directory: release-artifact
+        run: sha256sum -c SHA256SUMS.txt
+
+      - name: Upload / publish Chrome extension
         env:
-          EXPECTED_VERSION: ${{ needs.build.outputs.version }}
           CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
           CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
           CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
           CHROME_PUBLISHER_ID: ${{ vars.CHROME_PUBLISHER_ID }}
           CHROME_EXTENSION_ID: ${{ vars.CHROME_EXTENSION_ID }}
+          EXPECTED_VERSION: ${{ needs.build.outputs.version }}
           UPLOAD_ONLY: ${{ inputs.upload_only }}
         run: |
           args=()
           if [[ "$UPLOAD_ONLY" == 'true' ]]; then args+=(--upload-only); fi
           python scripts/release.py chrome --package "release-artifact/astral-${EXPECTED_VERSION}.zip" "${args[@]}"
 
-  edge:
-    if: ${{ inputs.target == 'both' || inputs.target == 'edge' }}
+  publish-edge:
+    name: Upload / publish Edge
     needs: build
+    if: ${{ inputs.target == 'both' || inputs.target == 'edge' }}
     runs-on: ubuntu-latest
     environment: extension-release
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m pip install requests
-      - uses: actions/download-artifact@v4
+
+      - name: Install dependencies
+        run: python -m pip install requests
+
+      - name: Download shared ZIP
+        uses: actions/download-artifact@v4
         with:
           name: extension-package
           path: release-artifact
-      - name: Upload / submit Edge
+
+      - name: Verify package checksum
+        working-directory: release-artifact
+        run: sha256sum -c SHA256SUMS.txt
+
+      - name: Upload / publish Edge extension
         env:
-          EXPECTED_VERSION: ${{ needs.build.outputs.version }}
           EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
           EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
           EDGE_PRODUCT_ID: ${{ vars.EDGE_PRODUCT_ID }}
+          EXPECTED_VERSION: ${{ needs.build.outputs.version }}
           UPLOAD_ONLY: ${{ inputs.upload_only }}
         run: |
           args=()
@@ -127,30 +182,51 @@ jobs:
           python scripts/release.py edge --package "release-artifact/astral-${EXPECTED_VERSION}.zip" "${args[@]}"
 
   release:
-    if: ${{ !inputs.upload_only && inputs.target == 'both' }}
-    needs: [build, chrome, edge]
+    name: Create GitHub Release
+    needs: [build, publish-chrome, publish-edge]
+    if: >-
+      ${{ always() &&
+          inputs.target == 'both' &&
+          inputs.upload_only == false &&
+          needs.build.result == 'success' &&
+          needs.publish-chrome.result == 'success' &&
+          needs.publish-edge.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download shared ZIP and checksum
+        uses: actions/download-artifact@v4
         with:
           name: extension-package
           path: release-artifact
-      - name: Create GitHub Release
+
+      - name: Verify package checksum
+        working-directory: release-artifact
+        run: sha256sum -c SHA256SUMS.txt
+
+      - name: Create Release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.build.outputs.version }}
         run: |
-          set -euo pipefail
-          cd release-artifact
-          sha256sum "astral-${VERSION}.zip" > SHA256SUMS.txt
-          cd ..
-          if gh release view "v${VERSION}" >/dev/null 2>&1; then
-            echo "Release already exists"; exit 1
+          TAG="v${VERSION}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; refusing to overwrite it."
+            exit 1
           fi
-          gh release create "v${VERSION}" \
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists; refusing to overwrite it."
+            exit 1
+          fi
+          gh release create "$TAG" \
             "release-artifact/astral-${VERSION}.zip" \
             release-artifact/SHA256SUMS.txt \
-            --title "${VERSION}" --generate-notes --target "$GITHUB_SHA"
+            --title "$VERSION" \
+            --generate-notes \
+            --target "$GITHUB_SHA"
