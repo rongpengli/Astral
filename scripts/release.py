@@ -147,14 +147,14 @@ def edge_operation_id(location):
 def edge_poll(url, headers, label):
     deadline = time.monotonic() + 900
     while time.monotonic() < deadline:
-        result = as_json(request('GET', url, headers=headers))
+        result = as_json(request('GET', url, headers=headers, expected=(200, 202)))
         state = str(result.get('status', '')).lower()
         print(f'Edge {label} status: {state or "unknown"}; message={result.get("message", "")}')
-        if state == 'succeeded':
+        if state in ('succeeded', 'success', 'completed'):
             return
         if state in ('failed', 'cancelled', 'canceled'):
             raise RuntimeError(f'Edge {label} failed: {json.dumps(result, ensure_ascii=False)}')
-        if state not in ('inprogress', 'pending', 'notstarted'):
+        if state not in ('inprogress', 'pending', 'notstarted', 'running', 'queued'):
             raise RuntimeError(f'Unexpected Edge {label} status: {json.dumps(result, ensure_ascii=False)}')
         time.sleep(10)
     raise RuntimeError(f'Edge {label} timed out')
