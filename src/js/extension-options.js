@@ -69,6 +69,7 @@
   }catch(error){AstralStore.notify(error.message,'壁纸上传失败')}
  });
  render();
+ addEventListener('astral-history-changed',()=>render());
  addEventListener('astral-defaults-restored',()=>render(true));
  addEventListener('storage',()=>{render()});
  for(const [id,key] of Object.entries(fields))el(id).addEventListener('change',()=>saveField(id,key));

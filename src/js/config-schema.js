@@ -48,6 +48,7 @@ const AstralSchema=(()=>{
    const limit=Number(config.bingCacheLimit);
    config.bingCacheLimit=Number.isInteger(limit)&&limit>=1&&limit<=8?limit:config.bingMaxHistory;
    config.bingMaxHistory=Math.min(config.bingMaxHistory,config.bingCacheLimit);
+   config.bingCacheLimit=config.bingMaxHistory;
   }
   delete config.wallpaperIntervalDays;
   config.weatherLatitude=Number(config.weatherLatitude);config.weatherLongitude=Number(config.weatherLongitude);

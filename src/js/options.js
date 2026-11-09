@@ -65,6 +65,7 @@ let myNewTabWE = {
  },
 
 	initConf: () => {
+        AstralWallpaper.configure(myNewTabWE.config).catch(console.warn);
 		$id('newtab-open').checked = myNewTabWE.config.newTabOpen;
 		$id('wallpaper-resolution').value = String(myNewTabWE.config.useBigImage);
 		$id('bing-max-history').value = String(myNewTabWE.config.bingMaxHistory);
@@ -150,6 +151,7 @@ let myNewTabWE = {
             try{
                 myNewTabWE.cancelLocation?.();for(const id of ['weather-city','weather-lat','weather-lon'])delete $id(id).dataset.dirty;
                 const saved=await AstralStore.restorePreset();
+                await AstralWallpaper.configure(saved.config,true);
                 myNewTabWE.config=saved.config;
                 myNewTabWE.sites=saved.sites;
                 myNewTabWE.initConf();
@@ -169,6 +171,8 @@ let myNewTabWE = {
 		$id('bing-max-history').addEventListener('change', e => {
 			myNewTabWE.config.bingMaxHistory = Number(e.target.value);
 			if(!myNewTabWE.setStorage(true))return;
+            AstralWallpaper.configure(myNewTabWE.config).catch(console.warn);
+            dispatchEvent(new Event('astral-history-changed'));
 		});
 		$id('title').addEventListener('change', e => {
 			myNewTabWE.config.title = e.target.value;
