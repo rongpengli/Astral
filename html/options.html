@@ -62,7 +62,7 @@
         <div class="group">
             <div class="header" id="defaults-heading">恢复默认</div>
             <div class="content">
-                <p id="defaults-message">是否恢复默认？当前选项、导航网址和主页样式将被替换，并采用默认同步设置。</p>
+                <p id="defaults-message">是否恢复默认？当前选项、导航网址和主页样式将被替换。</p>
                 <div class="dialog-confirm"><button id="defaults-confirm" type="button">确认</button><button id="defaults-cancel" type="button">取消</button></div>
             </div>
         </div>
@@ -90,25 +90,9 @@
                 <tr>
                     <td>壁纸</td>
                     <td><div class="config-inline wallpaper-fields">
-                        <select id="wallpaper-mode" aria-label="壁纸来源"><option value="bing">Bing 壁纸</option><option value="custom">用户定义</option></select>
-                        <span id="bing-controls" class="config-inline">
-                        <label class="inline-choice"><input type="checkbox" id="ext-auto-change">自动更新</label>
-                        <span class="config-separator" aria-hidden="true"></span>
                         <label class="inline-choice">Bing 壁纸缓存 <select id="bing-max-history" aria-label="Bing 壁纸缓存天数"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select> 天</label>
                         <span class="config-separator" aria-hidden="true"></span>
                         <label class="inline-choice">分辨率 <select id="wallpaper-resolution" aria-label="壁纸分辨率"><option value="2">UHD</option><option value="1">1920×1080</option><option value="0">1366×768</option></select></label>
-                        <span class="config-separator" aria-hidden="true"></span>
-                        <label class="inline-choice"><input type="checkbox" id="ext-auto-download">自动下载</label>
-                        <span class="config-separator" aria-hidden="true"></span>
-                        <label class="inline-choice">下载目录 <input id="ext-download-dir" placeholder="下载子目录" aria-label="下载子目录" title="相对于浏览器下载目录；留空则保存到下载根目录"></label>
-                        </span>
-                        <span id="custom-controls" class="config-inline" hidden>
-                          <input id="ext-user-image-src" placeholder="图片地址或 Data URL" aria-label="自定义壁纸地址">
-                          <button type="button" id="pick-wallpaper">上传图片</button>
-                          <button type="button" id="reset-custom-wallpaper" title="清空自定义图片并恢复默认渐变背景">恢复默认</button>
-                          <input type="file" id="wallpaper-file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" hidden>
-                          <small>最大 16 MB</small>
-                        </span>
                     </div></td>
                 </tr>
                 <tr>
@@ -129,22 +113,7 @@
                         </span>
                     </div></td>
                 </tr>
-                <tr id="astral-sync-panel">
-                    <td>同步</td>
-                    <td><div class="config-inline sync-fields">
-                        <select id="astral-sync-mode" aria-label="同步开关"><option value="on">开启同步</option><option value="off">关闭同步</option></select>
-                        <span id="astral-sync-tools" class="config-inline sync-tools" hidden>
-                        <span class="config-separator" aria-hidden="true"></span>
-                        <button id="astral-sync-retry" type="button">立即同步</button>
-                        <button id="astral-sync-push" type="button">本机上传</button>
-                        <button id="astral-sync-pull" type="button">云端恢复</button>
-                        <span id="astral-sync-status" class="field-status" role="status" aria-live="polite">正在检查…</span>
-                        <span id="astral-sync-time" class="field-status"></span>
-                        <span id="astral-sync-retry-info" class="field-status"></span>
-                        <span id="astral-sync-detail" class="field-status" hidden></span>
-                        </span>
-                    </div></td>
-                </tr>
+
                 <tr>
                     <td>辅助</td>
                     <td><div class="config-inline auxiliary-actions">
@@ -186,14 +155,12 @@
 			</div>
 		</div>
 	</div>
-	<script src="../js/site-icons.js"></script>
+	
 <script src="../js/compat.js"></script>
-<script src="../js/config-schema.js"></script>
 <script src="../js/storage.js"></script>
 <script src="../js/weather.js"></script>
 <script src="../js/options.js"></script>
-<script src="../js/options-sync-ui.js"></script>
-<script src="../js/extension-options.js"></script>
+
 </body>
 
 </html>

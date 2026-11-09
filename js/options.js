@@ -16,8 +16,8 @@ let myNewTabWE = {
 
 	notify: (message,title) => AstralStore.notify(message,title),
 
- getStorage: async () => {await AstralStore.ready;const data=AstralStore.read();myNewTabWE.config=data.config;myNewTabWE.sites=data.sites},
- setStorage: isConfig => {try{const saved=AstralStore.write(isConfig?{config:myNewTabWE.config}:{sites:myNewTabWE.sites});if(isConfig)myNewTabWE.config=saved.config;const el=document.getElementById('save-status');if(el){el.textContent='保存中…';clearTimeout(myNewTabWE.saveStatusTimer);myNewTabWE.saveStatusTimer=setTimeout(()=>el.textContent='',1800)}return true}catch(e){const el=document.getElementById('save-status');if(el)el.textContent='保存失败';const previous=AstralStore.read();myNewTabWE.config=previous.config;myNewTabWE.sites=previous.sites;AstralStore.notify(e.message,'保存失败');queueMicrotask(()=>{myNewTabWE.initConf();myNewTabWE.renderSites()});return false}},
+ getStorage: async () => {await AstralStore.initializeFromFile();const data=AstralStore.read();myNewTabWE.config=data.config;myNewTabWE.sites=data.sites},
+ setStorage: isConfig => {try{const saved=AstralStore.write(isConfig?{config:myNewTabWE.config}:{sites:myNewTabWE.sites});if(isConfig)myNewTabWE.config=saved.config;const el=document.getElementById('save-status');if(el){el.textContent='已保存';clearTimeout(myNewTabWE.saveStatusTimer);myNewTabWE.saveStatusTimer=setTimeout(()=>el.textContent='',1800)}return true}catch(e){const el=document.getElementById('save-status');if(el)el.textContent='保存失败';const previous=AstralStore.read();myNewTabWE.config=previous.config;myNewTabWE.sites=previous.sites;AstralStore.notify(e.message,'保存失败');queueMicrotask(()=>{myNewTabWE.initConf();myNewTabWE.renderSites()});return false}},
 
  initImportExport: () => {
   $id('import').addEventListener('click',()=>{if($id('import').disabled)return;upload.value='';upload.accept='.json,application/json';upload.onchange=async()=>{if(!upload.files?.[0])return;$id('import').disabled=true;try{
@@ -40,24 +40,20 @@ let myNewTabWE = {
         locationWarning='；自动定位未成功，已使用杭州作为默认位置，可在天气设置中重新定位';
       }
     }
-    const imported=await AstralStore.importData(data);for(const id of ['weather-city','weather-lat','weather-lon'])delete $id(id).dataset.dirty;myNewTabWE.config=imported.config;myNewTabWE.sites=imported.sites;myNewTabWE.initConf();myNewTabWE.renderSites();dispatchEvent(new StorageEvent('storage',{key:'astral.web.settings.v1'}));
-    const syncNotice=imported.importOutcome?.uploadError?'；已保存本机，但云端上传失败：'+imported.importOutcome.uploadError:imported.importOutcome?.uploaded?'；已同步到云端':'；已保存本机（同步未开启）';
-    AstralStore.notify('已导入 '+imported.sites.length+' 个分组，'+imported.sites.reduce((n,g)=>n+g.list.length,0)+' 个网址'+locationWarning+syncNotice,'导入成功');
-   }catch(e){try{await chrome.storage.local.set({__astralImportFailure:{kind:'local',message:e.message||String(e),at:Date.now()}})}catch{}const meta=(await chrome.storage.local.get('__astralSync')).__astralSync;myNewTabWE.notify(e.message+(meta?.importBlocked?'；同步已暂停，请重试导入或手动开启同步':''),'导入配置失败')}finally{$id('import').disabled=false}};upload.click()});
+    const imported=AstralStore.replace(data);for(const id of ['weather-city','weather-lat','weather-lon'])delete $id(id).dataset.dirty;myNewTabWE.config=imported.config;myNewTabWE.sites=imported.sites;myNewTabWE.initConf();myNewTabWE.renderSites();dispatchEvent(new StorageEvent('storage',{key:'astral.web.settings.v1'}));
+    AstralStore.notify('已导入 '+imported.sites.length+' 个分组，'+imported.sites.reduce((n,g)=>n+g.list.length,0)+' 个网址'+locationWarning,'导入成功');
+   }catch(e){myNewTabWE.notify(e.message,'导入配置失败')}finally{$id('import').disabled=false}};upload.click()});
   $id('export').addEventListener('click',async()=>{
    const button=$id('export');
    if(button.disabled)return;
    button.disabled=true;
    try{
-    await AstralStore.flush();const data=AstralStore.read();
+    const data=AstralStore.read();
     // Export the stored location mode and coordinates as-is; never request permission on export.
     // Resolve missing icons only for the exported snapshot. Import and stored
     // configurations retain the existing lazy /favicon.ico fallback behavior.
     const {sites}=await AstralStore.exportSitesWithIcons(data.sites);
-    const meta=(await chrome.storage.local.get('__astralSync')).__astralSync;
-    const syncEnabled=meta ? !!meta.enabled && !meta.userDisabled && !meta.importBlocked : true;
-    const config={...AstralCompat.portable(data.config),syncEnabled};
-    AstralStore.download(new Blob([JSON.stringify({config,sites,css:data.css},null,2)+'\n'],{type:'application/json'}),'AstralNewTab.json');
+    AstralStore.download(new Blob([JSON.stringify({config:data.config,sites,css:data.css},null,2)+'\n'],{type:'application/json'}),'AstralNewTab.json');
     AstralStore.notify('已导出配置：自动发现的图标不嵌入，自定义图标按需压缩备份','导出成功');
    }catch(e){myNewTabWE.notify(e.message||String(e),'导出配置失败')}
    finally{button.disabled=false}
@@ -154,9 +150,7 @@ let myNewTabWE = {
                 myNewTabWE.sites=saved.sites;
                 myNewTabWE.initConf();
                 myNewTabWE.renderSites();
-                dispatchEvent(new Event('astral-defaults-restored'));
-                if(saved.uploadError)myNewTabWE.notify(saved.uploadError,'预设已恢复，云端同步失败');
-            }catch(error){myNewTabWE.notify(error.message,'恢复默认未完全完成')}
+            }catch(error){myNewTabWE.notify(error.message,'恢复默认失败')}
         });
 		$id('newtab-open').addEventListener('click', e => {
 			myNewTabWE.config.newTabOpen = e.target.checked;

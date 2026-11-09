@@ -48,10 +48,6 @@ th,td {padding:5px;text-align:left;vertical-align:middle;}
 #title {width:270px;max-width:100%;}
 #bing-max-history {width:58px;min-width:58px;padding-left:8px;padding-right:4px;}
 #wallpaper-resolution {width:118px;min-width:118px;padding-left:8px;padding-right:4px;}
-#ext-download-dir {width:110px;}
-#ext-download-dir[data-default-directory="true"] {color:var(--default-dir);}
-#ext-download-dir[data-default-directory="false"] {color:var(--edited-dir);}
-#ext-user-image-src {width:260px;flex:1 1 180px;}
 #native-location-controls {gap:6px 10px;}
 #weather-manual-fields {display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;}
 .city-search-wrap {position:relative;display:inline-flex;min-width:150px;width:220px;}
@@ -59,8 +55,6 @@ th,td {padding:5px;text-align:left;vertical-align:middle;}
 #weather-lat,#weather-lon {width:140px;}
 #location-status,.field-status,#save-status {font-size:12px;line-height:20px;color:var(--muted);}
 #save-status {display:inline-block;margin-left:10px;}
-#astral-sync-detail {white-space:pre-wrap;overflow-wrap:anywhere;}
-#astral-sync-tools {display:inline-flex;align-items:center;gap:6px 10px;}
 #weather-candidates {position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:1000;max-height:240px;overflow:auto;border:1px solid var(--control-border);border-radius:4px;background:var(--panel-bg);box-shadow:0 4px 12px #0002;}
 #weather-candidates .city-suggestion {display:block;width:100%;height:auto;min-height:var(--control-height);padding:6px 8px;border:0;border-bottom:1px solid var(--line);border-radius:0;text-align:left;white-space:normal;line-height:20px;}
 #weather-candidates .city-suggestion:last-child {border-bottom:0;}
@@ -92,7 +86,7 @@ th,td {padding:5px;text-align:left;vertical-align:middle;}
 #confirm,.dialog-confirm {margin-top:8px;padding-top:8px;border-top:1px solid #aaa;text-align:center;}
 #confirm button,.dialog-confirm button {margin:0 4px;}
 @media(max-width:900px){body{margin:16px;}#logo a{font-size:26px;}#config td:first-child{width:64px;min-width:64px;}}
-@media(max-width:600px){body{margin:8px;}.content{padding:6px 8px;}.header{padding:7px 8px;}#logo a{font-size:20px;}#config td:first-child{width:44px;min-width:44px;}.config-inline,#astral-sync-tools{gap:6px 8px;}#title{width:min(270px,100%);}#weather-manual-fields{width:100%;}.city-search-wrap{width:100%;}#weather-lat,#weather-lon{width:calc(50% - 5px);}}
+@media(max-width:600px){body{margin:8px;}.content{padding:6px 8px;}.header{padding:7px 8px;}#logo a{font-size:20px;}#config td:first-child{width:44px;min-width:44px;}.config-inline{gap:6px 8px;}#title{width:min(270px,100%);}#weather-manual-fields{width:100%;}.city-search-wrap{width:100%;}#weather-lat,#weather-lon{width:calc(50% - 5px);}}
 
 button {-webkit-tap-highlight-color:transparent;}
 #open-customize,#open-customize:hover,#open-customize:active,#open-customize:focus {color:var(--text);}
@@ -119,6 +113,7 @@ button {-webkit-tap-highlight-color:transparent;}
 
 #settings-fields {border:0;padding:0;margin:0;min-width:0;}
 #settings-fields:disabled {visibility:hidden;}
+
 
 #sites > .group > .content {overflow-x:visible;}
 .group-table,.group-table tbody {display:block;width:100%;min-width:0;border:0;}

@@ -265,20 +265,5 @@ body > header, body > footer, body > #date, body > #navs, body > #weather-contai
    max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 
-html {font-size:16px;}
-body {font-size:16px;}
-#navtable td {font-size:18px;line-height:1.5;}
-#navtable th {font-size:17px;line-height:1.6;}
-#navtitle #weather-container {font-size:15px;line-height:1.5;}
-#navtitle .nav-actions {font-size:15px;}
-#navtitle .nav-actions a {opacity:.8;}
-#navtitle .nav-actions a:hover {opacity:1;}
-#navtitle .action-icon {display:block;flex:0 0 auto;width:1em;height:1em;}
-@media(max-width:850px){#navtitle .action-icon{width:1.15em;height:1.15em;}}
-@media(max-width:600px){#navtable td{font-size:16px;}#navtable th{font-size:16px;}#navtitle #weather-container{font-size:14px;}#navtitle .nav-actions{font-size:14px;}}
-
 #navtable td a {display:inline-flex!important;align-items:center!important;gap:.25em;line-height:1.5;vertical-align:middle;}
 #navtable td a img {display:block;flex:0 0 auto;margin:0!important;vertical-align:middle;}
-#navtitle .nav-actions a {align-items:center;line-height:1.5;}
-
-#change-wallpaper[hidden], #download-wallpaper[hidden] {display:none!important;}
