@@ -65,4 +65,14 @@ cp "$CONFIG" "$DEST/AstralNewTab.json"
 
 echo "Astral synchronized successfully."
 echo "Destination: $DEST"
-echo "Run: hexo g && hexo d"
+
+# Generate and deploy Hexo
+echo "Generating Hexo site..."
+
+cd "$HEXO_ROOT"
+npx hexo generate
+
+echo "Deploying Hexo site..."
+npx hexo deploy
+
+echo "Hexo deployment completed successfully."
