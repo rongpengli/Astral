@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html data-astral-loading>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<link rel="icon" href="./favicon.ico?v=1126icons" sizes="any">
+	<link rel="icon" type="image/png" sizes="16x16" href="./image/astral-16.png?v=1126icons">
+	<link rel="icon" type="image/png" sizes="32x32" href="./image/astral-32.png?v=1126icons">
+	<link rel="icon" type="image/png" sizes="48x48" href="./image/astral-48.png?v=1126icons">
+	<link rel="icon" type="image/png" sizes="192x192" href="./image/astral-192.png?v=1126icons">
+	<link rel="icon" type="image/png" sizes="512x512" href="./image/astral-512.png?v=1126icons">
+	<link rel="apple-touch-icon" sizes="180x180" href="./image/apple-touch-icon.png?v=1126icons">
+
+        <meta name="color-scheme" content="light dark">
+        <style>
+          html {background:#e6e9f1;color-scheme:light dark;}
+          html body {background-color:#e6e9f1;background-image:linear-gradient(125deg,#dce6ef,#e6e0ef,#eee1e5);}
+          html[data-astral-loading] #date,html[data-astral-loading] #navs {visibility:hidden;}
+          @media(prefers-color-scheme:dark){
+            html {background:#242733;}
+            html body {background-color:#242733;background-image:linear-gradient(125deg,#202c3c,#323044,#42323f);}
+          }
+        </style>
+        <link rel="stylesheet" data-astral-base-css="1" href="./css/index.css">
+</head>
+	<body>
+		<header></header>
+		<div id="date">
+			<span id="solar">
+				<span id="solar-date"></span>
+				<span id="solar-festival" class="festival"></span>
+				<span id="solar-holiday" class="holiday"></span>
+			</span>
+			<br />
+			<span id="lunar">
+				<span id="lunar-date"></span>
+				<span id="lunar-festival" class="festival"></span>
+				<span id="lunar-holiday" class="holiday"></span>
+			</span>
+		</div>
+		<div id="navs">
+			<div id="navtitle">
+                <div id="weather-container" aria-live="polite"></div>
+                <div class="nav-actions">
+                    <a href="#" id="change-wallpaper" title="在最近几天的 Bing 壁纸中切换"><img src="./image/change.svg" /><span class="action-label">切换壁纸</span></a>
+                    <a href="./html/options.html" draggable="false" target="_blank" title="网页选项"><img src="./image/config.svg" /><span class="action-label">选项</span></a>
+                </div>
+			</div>
+			<table id="navtable"></table>
+		</div>
+		<footer></footer>
+		<script src="./js/calendar.min.js"></script>
+		<script src="./js/storage.js"></script>
+        <script src="./js/wallpaper.js"></script>
+        <script src="./js/weather.js"></script>
+        <script src="./js/index.js"></script>
+	</body>
+</html>

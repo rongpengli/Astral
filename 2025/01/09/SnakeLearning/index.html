@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.1.1">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.loli.net/css?family=EB+Garamond:300,300italic,400,400italic,700,700italic%7CCinzel+Decorative:300,300italic,400,400italic,700,700italic%7CSource+Code+Pro:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha256-wiz7ZSCn/btzhjKDQBms9Hx4sSeUYsDrTLg7roPstac=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-minimal.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"rongpeng.info","root":"/","images":"/images","scheme":"Pisces","darkmode":true,"version":"8.19.2","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.json","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+<link href="https://fonts.loli.net/css2?family=Noto+Serif+SC&display=swap" rel="stylesheet">
+    <meta name="description" content="Manuscript InformationXiaoxue Yu, Xingfu Yi, Rongpeng Li, Fei Wang, Chenghui Peng, Zhifeng Zhao and Honggang Zhang, “Snake Learning: A Communication- and Computation-Efficient Distributed Learning Fra">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Snake Learning -- A Communication- and Computation-Efficient Distributed Learning Framework for 6G">
+<meta property="og:url" content="http://rongpeng.info/2025/01/09/SnakeLearning/index.html">
+<meta property="og:site_name" content="Dr. Rongpeng Li">
+<meta property="og:description" content="Manuscript InformationXiaoxue Yu, Xingfu Yi, Rongpeng Li, Fei Wang, Chenghui Peng, Zhifeng Zhao and Honggang Zhang, “Snake Learning: A Communication- and Computation-Efficient Distributed Learning Fra">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://rongpeng.info/2025/01/09/SnakeLearning/fig1.png">
+<meta property="og:image" content="http://rongpeng.info/2025/01/09/SnakeLearning/fig2.png">
+<meta property="og:image" content="http://rongpeng.info/2025/01/09/SnakeLearning/fig3.png">
+<meta property="og:image" content="http://rongpeng.info/2025/01/09/SnakeLearning/fig4.png">
+<meta property="article:published_time" content="2025-01-09T02:23:05.000Z">
+<meta property="article:modified_time" content="2025-01-17T02:34:56.371Z">
+<meta property="article:author" content="Rongpeng Li">
+<meta property="article:tag" content="highlights">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://rongpeng.info/2025/01/09/SnakeLearning/fig1.png">
+
+
+<link rel="canonical" href="http://rongpeng.info/2025/01/09/SnakeLearning/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://rongpeng.info/2025/01/09/SnakeLearning/","path":"2025/01/09/SnakeLearning/","title":"Snake Learning -- A Communication- and Computation-Efficient Distributed Learning Framework for 6G"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Snake Learning -- A Communication- and Computation-Efficient Distributed Learning Framework for 6G | Dr. Rongpeng Li</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Dr. Rongpeng Li</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">李荣鹏 博士</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-news"><a href="/news/" rel="section"><i class="fa fa-newspaper fa-fw"></i>News</a></li><li class="menu-item menu-item-publications"><a href="/publications/" rel="section"><i class="fa fa-book fa-fw"></i>Publications</a></li><li class="menu-item menu-item-highlights"><a href="/categories/research/" rel="section"><i class="fa fa-lightbulb fa-fw"></i>Highlights</a></li><li class="menu-item menu-item-team"><a href="/team/" rel="section"><i class="fa fa-people-group fa-fw"></i>Team</a></li><li class="menu-item menu-item-blog"><a href="/categories/blog/" rel="section"><i class="fa fa-blog fa-fw"></i>Blog</a></li><li class="menu-item menu-item-love"><a href="/love/" rel="section"><i class="fa fa-heart fa-fw"></i>Love</a></li><li class="menu-item menu-item-links"><a href="/astral/" rel="section"><i class="fa fa-ellipsis fa-fw"></i>Links</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%83%8C%E6%99%AF%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">背景介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%8E%B0%E6%9C%89%E6%96%B9%E6%B3%95%E9%9D%A2%E4%B8%B4%E7%9A%84%E6%8C%91%E6%88%98"><span class="nav-number">2.</span> <span class="nav-text">现有方法面临的挑战</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Snake-Learning%EF%BC%9A%E4%B8%80%E7%A7%8D%E6%96%B0%E5%9E%8B%E5%88%86%E5%B8%83%E5%BC%8F%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6"><span class="nav-number">3.</span> <span class="nav-text">Snake Learning：一种新型分布式学习框架</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Snake-Learning-%E7%9A%84%E4%B8%BB%E8%A6%81%E7%BB%84%E4%BB%B6"><span class="nav-number">3.1.</span> <span class="nav-text">Snake Learning 的主要组件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Snake-Learning-%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B"><span class="nav-number">3.2.</span> <span class="nav-text">Snake Learning 的工作流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E8%A6%81%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="nav-number">3.3.</span> <span class="nav-text">主要实验结果</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Rongpeng Li"
+      src="/images/me.jpg">
+  <p class="site-author-name" itemprop="name">Rongpeng Li</p>
+  <div class="site-description" itemprop="description">An associate professsor at Zhejiang University. Research Interests: Intelligent Wireless Networks, Reinforcement Learning and more.</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">26</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://www.zju.edu.cn/" title="Zhejiang University → https:&#x2F;&#x2F;www.zju.edu.cn" rel="noopener me" target="_blank"><i class="fa fa-school fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://scholar.google.com/citations?user=-JNQawgAAAAJ&hl=zh-CN" title="Google Scholar → https:&#x2F;&#x2F;scholar.google.com&#x2F;citations?user&#x3D;-JNQawgAAAAJ&amp;hl&#x3D;zh-CN" rel="noopener me" target="_blank"><i class="fab fa-google-scholar fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zjunice" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zjunice" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lirongpeng@zju.edu.cn" title="E-Mail → mailto:lirongpeng@zju.edu.cn" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://rongpeng.info/2025/01/09/SnakeLearning/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/me.jpg">
+      <meta itemprop="name" content="Rongpeng Li">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Dr. Rongpeng Li">
+      <meta itemprop="description" content="An associate professsor at Zhejiang University. Research Interests: Intelligent Wireless Networks, Reinforcement Learning and more.">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Snake Learning -- A Communication- and Computation-Efficient Distributed Learning Framework for 6G | Dr. Rongpeng Li">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Snake Learning -- A Communication- and Computation-Efficient Distributed Learning Framework for 6G
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2025-01-09 10:23:05" itemprop="dateCreated datePublished" datetime="2025-01-09T10:23:05+08:00">2025-01-09</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2025-01-17 10:34:56" itemprop="dateModified" datetime="2025-01-17T10:34:56+08:00">2025-01-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/research/" itemprop="url" rel="index"><span itemprop="name">research</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><div class="note info"><p><strong>Manuscript Information</strong><br>Xiaoxue Yu, Xingfu Yi, Rongpeng Li, Fei Wang, Chenghui Peng, Zhifeng Zhao and Honggang Zhang, <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2405.03372">“Snake Learning: A Communication- and Computation-Efficient Distributed Learning Framework for 6G,”</a> IEEE Commun. Mag., Jan. 2025.</p>
+</div>
+
+<h1 id="背景介绍"><a href="#背景介绍" class="headerlink" title="背景介绍"></a>背景介绍</h1><p>随着6G网络的快速发展，网络计算资源得到了进一步整合，智能用户设备（User Equipment，UE）和网络节点（Network Elements，NEs）不再只是数据的接收终端，还可以作为计算节点，参与网络智能化应用的协作计算。这种协作方式被称为“计算即服务”（Compute-as-a-Service，CaaS）和“AI即服务”（AI-as-a-Service，AIaaS）。在此背景下，6G将逐渐演化为一个动态的分布式计算平台，为网络智能和资源利用率的提升提供前所未有的机会。</p>
+<p>为了提高网络的智能化水平，分布式深度学习成为一种重要的技术手段。当前主流的分布式学习框架，如联邦学习（Federated Learning，FL）、拆分学习（Split Learning），已经在一些场景，尤其是大模型微调方面，展示出了潜力。然而，在6G网络环境下，这些框架仍面临着不少难题，尤其是在高度异构、通信不稳定和资源受限的环境中更是困难重重。因此，设计一种高效的、能够适应6G网络环境的学习框架，是未来推动网络智能化发展的关键一步。</p>
+<h1 id="现有方法面临的挑战"><a href="#现有方法面临的挑战" class="headerlink" title="现有方法面临的挑战"></a>现有方法面临的挑战</h1><p>目前，广泛应用的分布式学习框架，包括联邦学习、拆分学习及其各种混合变体，主要面临以下几大挑战：</p>
+<ol>
+<li><strong>对通信同步高程度依赖</strong>：联邦学习通常依赖多个设备与中心服务器之间频繁的双向通信来实现模型的同步，拆分学习更是需要在每一次学习过程中依靠通信传递中间激活值和梯度完成训练。这对于6G的无线网络环境来说并不理想，因为无线网络中的连接往往是不稳定的。环境变化、设备密度、设备移动性等因素都会导致上下行速率波动，从而影响实时数据和模型同步的稳定性。这种依赖同步通信的特性不仅增加了带宽的压力，还可能导致模型训练过程的不稳定，甚至无法收敛，从而严重影响分布式学习的效率和效果。</li>
+<li><strong>可用资源的异构性和动态性</strong>：6G网络中的计算资源是动态且异构的。服务节点的可用性会因为服务间共享而不断变化，导致所谓的“潮汐效应”，即资源的可用性随时间波动。这意味着一些节点在特定时间内可能无法提供足够的计算能力来满足复杂模型的训练需求。此外，不同供应商提供的计算节点硬件性能各异，导致计算能力的不均衡，这给分布式学习带来了额外的复杂性。</li>
+<li><strong>数据异质性</strong>：在分布式学习中，不同节点持有的数据通常存在显著差异，即非独立同分布（Non-IID）的情况。这种差异可能来自于用户的行为习惯、时间变化、地理位置等因素，导致各个节点在训练中面临不同的优化目标，影响模型的稳定性和泛化能力。单纯依赖数据增强或合成数据等传统手段难以有效解决这些问题，因此需要新的、更智能的训练策略。</li>
+</ol>
+<img src="/2025/01/09/SnakeLearning/fig1.png" class="" title="fig1">
+
+<p>图1: 不同分布式学习框架对比</p>
+<h1 id="Snake-Learning：一种新型分布式学习框架"><a href="#Snake-Learning：一种新型分布式学习框架" class="headerlink" title="Snake Learning：一种新型分布式学习框架"></a>Snake Learning：一种新型分布式学习框架</h1><p>为了解决上述问题，我们提出了名为“Snake Learning”（蛇形学习）的新型分布式协同学习框架。该框架借鉴了经典游戏“贪吃蛇”的思路，逐层分配模型的中间部分给不同的节点进行训练，从而最大化利用6G网络中各节点的异构计算资源，降低通信和计算的负担。具体来说，Snake Learning 的核心理念是将模型的不同中间层分配给不同的节点来训练，而模型的第一层和最后一层由所有节点共同负责。其中，第一层提取基础特征，最后一层则用于任务的具体决策。每个节点在完成其负责的本地训练任务后，再将更新的参数上传，而不是实时同步所有节点的参数。通过这种逐层传递机制，以及必要的数据处理、蒸馏、自适应学习率等技术的应用，Snake Learning 显著减少了通信和计算资源的消耗，还能够在出现网络中断的情况下继续进行训练，具有极高的容错能力。</p>
+<img src="/2025/01/09/SnakeLearning/fig2.png" class="">
+
+<p>图2: Snake Learning 工作流程</p>
+<h2 id="Snake-Learning-的主要组件"><a href="#Snake-Learning-的主要组件" class="headerlink" title="Snake Learning 的主要组件"></a><strong>Snake Learning</strong> <strong>的主要组件</strong></h2><ol>
+<li><strong>服务提供者（Service Provider，SP）</strong>： 服务提供者（SP）负责Snake Learning中的训练任务管理和资源分配。它可以根据需要启动虚拟计算资源（如虚拟机或容器），以同时支持多个AI任务。在系统层面，SP可以根据服务需求和网络状况动态调整各任务的执行节点，以确保计算资源的高效利用。</li>
+<li><strong>过程控制器与计算引擎（Process Controller  &amp; Process Computation Engine，PC &amp; PCE）</strong>： 每个Snake Learning任务配备一个PC和一个PCE。PC负责任务分配和网络资源管理，比如节点的管理和任务调度；PCE则具体负责数据处理、模型训练和参数更新等计算工作。</li>
+<li><strong>本地管理器与本地计算引擎（Local Manager &amp;  Local Computation Engine，LM &amp; LCE）</strong>： 本地管理器（LM）负责管理每个节点的Snake Learning服务。在节点加入网络之前，LM需要获得SP的授权。LCE则负责处理节点上的具体计算任务，例如数据预处理、模型训练和参数更新。</li>
+</ol>
+<h2 id="Snake-Learning-的工作流程"><a href="#Snake-Learning-的工作流程" class="headerlink" title="Snake Learning 的工作流程"></a><strong>Snake Learning</strong> <strong>的工作流程</strong></h2><ol>
+<li><p><strong>初始化</strong>： 在Snake Learning的过程中，SP首先通过AIaaS API注册学习任务，确定任务目标、需求及可能的约束（例如服务级协议、数据和设备、层的分配等）。接下来，PC负责对服务节点进行统一的管理，确认节点连通性、计算资源状况，并持续监控节点的性能指标，包括资源利用率、数据质量及训练状态。</p>
+</li>
+<li><p><strong>层分配</strong>： 在Snake Learning中，PC基于各节点的计算能力、网络连接状态（如延迟和带宽）、系统资源（如CPU和内存）等因素，将模型的不同层分配给各节点进行训练。层分配的目的是根据节点的计算能力及网络状况，为其分配适合的模型层，从而最大化节点利用效率。</p>
+</li>
+<li><p><strong>本地训练：</strong>在层分配完成后，每个节点基于其本地数据集对被分配的模型层进行本地训练。与联邦学习类似，Snake Learning强调数据隐私的保护，只有训练后的模型参数才会传输至其他节点，而非实时同步所有节点的数据。为了进一步提高数据的隐私性，Snake Learning还可以引入差分隐私和同态加密等技术，防止在参数传输过程中发生数据泄露。此外，每个节点会对数据进行标准化和增强处理，以提高模型的泛化能力。在数据不均衡或者数据特性差异明显的情况下，使用数据模块进行预处理。为了解决由于节点之间数据分布不同（Non-IID）而导致的训练不稳定性，Snake Learning引入了知识蒸馏（Knowledge Distillation, KD）模块。在训练过程中，KD模块对来自不同节点的知识进行融合，确保模型不会因数据差异而遗忘部分重要的特征信息。这种机制通过衡量各节点之间的数据分布差异触发跨节点知识的蒸馏与共享，保持模型的整体一致性和泛化能力。</p>
+</li>
+<li><p><strong>节点管理与容错机制</strong>：由于6G网络中节点的状态具有动态性，可能因设备移动、连接波动等因素出现节点失效或网络中断的情况。为此，Snake Learning设计了动态任务管理与节点替换机制。PC会持续监控每个节点的状态，如果某节点发生故障，PC会将其训练任务转移至其他具有足够计算能力的候选节点来确保训练的连续性和模型的稳定性。</p>
+</li>
+<li><p><strong>参数传输与节点管理</strong>： 在模型训练过程中，如果需要一定程度聚合则在参数服务器模式下每个节点在完成本地训练后将更新后的参数上传至PCE，由其负责参数聚合并分发至PC指定的下一个节点；否则，在点对点模式下，节点可以直接将参数传递至下一个目标节点，从而进一步减少通信延迟和系统复杂度。</p>
+</li>
+</ol>
+<h2 id="主要实验结果"><a href="#主要实验结果" class="headerlink" title="主要实验结果"></a><strong>主要实验结果</strong></h2><p>为了验证Snake Learning的有效性，研究通过在经典分类任务和大型模型微调任务上分别进行了实验，结果显示Snake Learning表现出色，尤其是在资源受限的6G网络环境中展现了巨大的优势。</p>
+<ol>
+<li><strong>分类任务的训练</strong>： 在VGG11模型、CIFAR-10数据集上的实验表明，相较于其他算法，Snake Learning (SL）通过较少的训练迭代次数更迅速地达到60%的准确率，显著提升了节点的训练效率。同时，Snake Learning在大幅降低了每次通信的开销的同时，最终性能超过了传统联邦学习的95%以上。</li>
+</ol>
+<img src="/2025/01/09/SnakeLearning/fig3.png" class="" title="fig3">
+
+<p>图 3 : 不同训练总设备迭代次数下Snake Learning和其他算法的分类准确度性能比较，其中Non-iid数据服从$\alpha&#x3D;2$的Dirichlet分布. </p>
+<ol start="2">
+<li><strong>大语言模型（LLM）微调</strong>： 对于如Llama-3 8B和OPT-1.3B大语言模型，Snake Learning通过将模型层分配给不同的节点训练大幅降低了内存占用和计算需求。例如，在优化OPT-1.3B模型时，传统联邦学习需要大约19.37GB的内存，而Snake Learning仅需3.13GB，大大降低了硬件要求。</li>
+</ol>
+<img src="/2025/01/09/SnakeLearning/fig4.png" class="" title="fig4">
+
+<p>图 4: FL和Snake Learning （SL）分别在24个节点数量下微调OPT-1.3B模型和32个节点数量下微调Llama-3 8B模型的性能比较，其中性能由perplexity （ppl）衡量，其值越低表明模型的确定性和有效性越高。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/highlights/" rel="tag"># highlights</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2024/12/28/say-hello-2025-zjunice/" rel="prev" title="ZJUNICE Life：再见2024，你好2025">
+                  <i class="fa fa-angle-left"></i> ZJUNICE Life：再见2024，你好2025
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2025/08/07/ai4plasmahl3_nuclearfusion/" rel="next" title="Intelligent Plasma Shape Control in HL-3 Tokamak, the Latest Progress on Integrating Artificial Intelligence and Nuclear Fusion">
+                  Intelligent Plasma Shape Control in HL-3 Tokamak, the Latest Progress on Integrating Artificial Intelligence and Nuclear Fusion <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Rongpeng Li</span>
+  </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script size="100" alpha="0.8" zIndex="-1" src="https://cdnjs.cloudflare.com/ajax/libs/ribbon.js/1.0.2/ribbon.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+
+</body>
+</html>
