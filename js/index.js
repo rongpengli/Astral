@@ -50,6 +50,7 @@ const myNewTabWE={config:{},sites:[],css:{},bingIndex:0,images:[],busy:false,
  },
  initSites(){const table=$id('navtable');table.replaceChildren();for(const group of this.sites){const row=this.buildTr(group);if(group.name.toLowerCase()==='yooo'){row.hidden=true;row.setAttribute('name','yooo')}table.append(row)}this.updateNavItemWidth()},
  async initImage(){
+  AstralWallpaper.configure(this.config).catch(console.warn);
   // Display a previously verified wallpaper immediately, then check the latest Bing image.
   // Restore in the background; do not block navigation, calendar or weather.
   AstralWallpaper.restore().catch(()=>false).finally(()=>this.refreshWallpaper());
@@ -98,7 +99,7 @@ const myNewTabWE={config:{},sites:[],css:{},bingIndex:0,images:[],busy:false,
   $id('change-wallpaper').addEventListener('click',e=>{e.preventDefault();this.changeWallpaper()});
   addEventListener('keydown',e=>{if(e.ctrlKey&&e.key.toLowerCase()==='q')document.querySelectorAll('[name="yooo"]').forEach(n=>n.hidden=false)});
   addEventListener('keyup',()=>document.querySelectorAll('[name="yooo"]').forEach(n=>n.hidden=true));
-  addEventListener('storage',e=>{if(e.key!=='astral.web.settings.v1'&&e.key!==null)return;const data=AstralStore.read();const old=this.config;const oldCss=this.css;this.config=data.config;this.sites=data.sites;this.css=data.css;document.title=this.config.title;this.initSites();if(oldCss.index!==this.css.index)this.initCss();if(old.weatherLatitude!==this.config.weatherLatitude||old.weatherLongitude!==this.config.weatherLongitude||old.weatherCity!==this.config.weatherCity||old.weatherMode!==this.config.weatherMode||old.weatherLocationMode!==this.config.weatherLocationMode)AstralWeather.refresh(this.config);if(old.useBigImage!==this.config.useBigImage||old.bingMaxHistory!==this.config.bingMaxHistory)this.refreshWallpaper()});
+  addEventListener('storage',e=>{if(e.key==='astral.wallpaper.selection.v1'&&e.newValue===null){this.refreshWallpaper(true);return}if(e.key!=='astral.web.settings.v1'&&e.key!==null)return;const data=AstralStore.read();const old=this.config;const oldCss=this.css;this.config=data.config;AstralWallpaper.configure(this.config).catch(console.warn);this.sites=data.sites;this.css=data.css;document.title=this.config.title;this.initSites();if(oldCss.index!==this.css.index)this.initCss();if(old.weatherLatitude!==this.config.weatherLatitude||old.weatherLongitude!==this.config.weatherLongitude||old.weatherCity!==this.config.weatherCity||old.weatherMode!==this.config.weatherMode||old.weatherLocationMode!==this.config.weatherLocationMode)AstralWeather.refresh(this.config);if(old.useBigImage!==this.config.useBigImage||old.bingMaxHistory!==this.config.bingMaxHistory)this.refreshWallpaper()});
   // Passive location refresh only for an explicitly enabled auto-location mode.
   // Permission must already be granted; never prompt simply because the tab regained focus.
   const LOCATION_INTERVAL=6*60*60*1000;

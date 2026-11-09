@@ -7,18 +7,60 @@ const AstralWallpaper=(()=>{
  const DB='astral-wallpaper-v1', STORE='images', META='astral.bing.metadata.v2', CURRENT='astral.wallpaper.current';
  const TTL=60*60*1000;
  let activeUrl=null,hasWallpaper=false;
- const MAX_CACHE_ITEMS=16,MAX_CACHE_BYTES=80*1024*1024,MAX_IMAGE_BYTES=15*1024*1024;
+ const MAX_CACHE_BYTES=80*1024*1024,MAX_IMAGE_BYTES=15*1024*1024;
  function db(){return new Promise((resolve,reject)=>{if(!('indexedDB' in window))return reject(Error('IndexedDB unavailable'));const req=indexedDB.open(DB,1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(STORE))req.result.createObjectStore(STORE)};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
  async function get(key){const d=await db();return new Promise((resolve,reject)=>{const t=d.transaction(STORE,'readonly'),r=t.objectStore(STORE).get(key);r.onsuccess=()=>resolve(r.result?.blob||r.result);r.onerror=()=>reject(r.error);t.oncomplete=()=>d.close()})}
- async function put(key,value){
-  if(!(value instanceof Blob)||!value.type.startsWith('image/')||value.size>MAX_IMAGE_BYTES||!value.size)return;
-  const d=await db();
+ const POLICY='astral.wallpaper.cache-policy.v1';
+ function cachePolicy(config){
+  return JSON.stringify([Math.min(8,Math.max(1,Math.trunc(Number(config.bingMaxHistory))||1)),config.useBigImage]);
+ }
+ async function configure(config,reset=false){
+  const policy=cachePolicy(config);
+  if(!reset&&localStorage.getItem(POLICY)===policy)return;
+  localStorage.setItem(POLICY,policy);
+  if(reset){
+   localStorage.removeItem('astral.wallpaper.selection.v1');
+   const cached=cacheRead();
+   if(cached)localStorage.setItem(META,JSON.stringify({...cached,updated:0}));
+  }
+  try{await updateCache()}catch(error){
+   if(localStorage.getItem(POLICY)===policy)localStorage.removeItem(POLICY);
+   throw error;
+  }
+ }
+ async function updateCache(key,value){
+  if(key&&(!(value instanceof Blob)||!value.type.startsWith('image/')||!value.size||value.size>MAX_IMAGE_BYTES))return;
+  const database=await db();
   try{
-   const records=await new Promise((resolve,reject)=>{const t=d.transaction(STORE,'readonly'),r=t.objectStore(STORE).openCursor(),items=[];r.onsuccess=()=>{const c=r.result;if(c){const v=c.value;items.push({key:c.key,size:v?.blob?.size||v?.size||0,at:v?.at||0});c.continue()}else resolve(items)};r.onerror=()=>reject(r.error)});
-   const remaining=records.filter(x=>x.key!==key).sort((a,b)=>a.at-b.at);let total=remaining.reduce((n,x)=>n+x.size,0)+value.size;
-   const deletions=[];while(remaining.length&&(remaining.length+1>MAX_CACHE_ITEMS||total>MAX_CACHE_BYTES)){const old=remaining.shift();deletions.push(old.key);total-=old.size}
-   await new Promise((resolve,reject)=>{const t=d.transaction(STORE,'readwrite'),o=t.objectStore(STORE);for(const k of deletions)o.delete(k);o.put({blob:value,at:Date.now()},key);t.oncomplete=resolve;t.onerror=()=>reject(t.error)});
-  }finally{d.close()}
+   await new Promise((resolve,reject)=>{
+    const transaction=database.transaction(STORE,'readwrite');
+    const images=transaction.objectStore(STORE),records=[];
+    transaction.oncomplete=resolve;
+    transaction.onabort=()=>reject(transaction.error||Error('壁纸缓存写入失败'));
+    const request=images.openCursor();
+    request.onsuccess=()=>{
+     const cursor=request.result;
+     if(cursor){
+      if(cursor.key!==key){
+       const record=cursor.value;
+       records.push({key:cursor.key,size:(record.blob||record).size,at:record.at||0});
+      }
+      cursor.continue();return;
+     }
+     const [limit,size]=JSON.parse(localStorage.getItem(POLICY)||cachePolicy(AstralStore.read().config));
+     const recent=(cacheRead()?.images||[]).slice(0,limit).map(entry=>urlFor(entry,size));
+     const rank=url=>{const index=recent.indexOf(url);return index<0?limit:index};
+     if(key)records.push({key,size:value.size,at:Date.now()});
+     records.sort((a,b)=>rank(a.key)-rank(b.key)||b.at-a.at);
+     let count=0,bytes=0;
+     for(const record of records){
+      if(count>=limit||bytes+record.size>MAX_CACHE_BYTES){images.delete(record.key);continue}
+      count++;bytes+=record.size;
+      if(record.key===key)images.put({blob:value,at:record.at},key);
+     }
+    };
+   });
+  }finally{database.close()}
  }
  async function request(url,timeout=6500){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);try{const r=await fetch(url,{signal:controller.signal,cache:'no-store',credentials:'omit'});if(!r.ok)throw Error('HTTP '+r.status);return await r.json()}finally{clearTimeout(timer)}}
  function valid(e){return !!(e&&typeof e.urlbase==='string'&&/^\/th\?id=OHR\.[A-Za-z0-9_-]+(?:\.jpg)?$/i.test(e.urlbase))}
@@ -73,7 +115,7 @@ const AstralWallpaper=(()=>{
  async function show(entry,size){const url=urlFor(entry,size),name=nameFor(entry);let blob=null;try{blob=await get(url)}catch{}if(blob){const objectUrl=URL.createObjectURL(blob);try{await preload(objectUrl)}catch{blob=null;await preload(url)}finally{URL.revokeObjectURL(objectUrl)}}else{await preload(url)}
   apply(url,blob);try{localStorage.setItem(CURRENT,JSON.stringify({url,name,enddate:entry.enddate||'',size}))}catch{}
   // Fetch for offline caching only after successful display; failures do not hide the wallpaper.
-  if(!blob)fetch(url,{credentials:'omit'}).then(r=>{if(!r.ok)throw Error('image HTTP '+r.status);return r.blob()}).then(b=>{if(b.type.startsWith('image/'))return put(url,b)}).catch(()=>{});
+  if(!blob)fetch(url,{credentials:'omit'}).then(r=>{if(!r.ok)throw Error('image HTTP '+r.status);return r.blob()}).then(b=>{if(b.type.startsWith('image/'))return updateCache(url,b)}).catch(()=>{});
   return {url,name,blob};
  }
  async function restore(){let saved;try{saved=JSON.parse(localStorage.getItem(CURRENT)||'null')}catch{}if(!saved||typeof saved.url!=='string'||!(/^https:\/\/(?:cn\.|www\.)?bing\.com\/th\?id=OHR\.[A-Za-z0-9_-]+_(?:UHD|1920x1080|1366x768)\.jpg$/.test(saved.url)||(/^https:\/\/(?:bing\.img\.run|api\.dujin\.org)\/bing\/(?:1366x768|1920x1080)\.php$/.test(saved.url))||(/^https:\/\/bing\.img\.run\/(?:1366x768|1920x1080)\.php$/.test(saved.url))))return false;let blob=null;try{blob=await get(saved.url)}catch{}const test=blob?URL.createObjectURL(blob):saved.url;try{await preload(test)}catch{return false}finally{if(blob)URL.revokeObjectURL(test)}apply(saved.url,blob);return true}
@@ -102,5 +144,5 @@ const AstralWallpaper=(()=>{
   await show(entry,size);
   return true;
  }
- return {metadata,show,restore,showIfNew,showDailyFallback,hasWallpaper:()=>hasWallpaper};
+ return {configure,metadata,show,restore,showIfNew,showDailyFallback,hasWallpaper:()=>hasWallpaper};
 })();
