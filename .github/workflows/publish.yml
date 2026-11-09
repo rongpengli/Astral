@@ -1,14 +1,15 @@
+
 name: Publish browser extension
 
 on:
   workflow_dispatch:
     inputs:
       expected_version:
-        description: 'Version in src/manifest.json (e.g. 1.12.7)'
+        description: "Expected manifest version"
         required: true
         type: string
       target:
-        description: 'Store(s) to publish'
+        description: "Publishing target"
         required: true
         default: both
         type: choice
@@ -17,32 +18,35 @@ on:
           - chrome
           - edge
       upload_only:
-        description: 'Upload only; do not submit for review or create a Release'
+        description: "Upload without submitting for review"
         required: true
-        default: true
+        default: false
         type: boolean
 
 permissions:
   contents: read
 
 concurrency:
-  group: astral-store-release
+  group: astral-extension-publish
   cancel-in-progress: false
 
 jobs:
   build:
-    name: Validate and package
+    name: Validate and build
     runs-on: ubuntu-latest
+
     outputs:
       version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+
     steps:
-      - name: Check out repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install dependencies
         run: python -m pip install requests
@@ -53,81 +57,88 @@ jobs:
           EXPECTED_VERSION: ${{ inputs.expected_version }}
         run: |
           python - <<'PY'
-          import json, os, re
-          from pathlib import Path
-          manifest = json.loads(Path('src/manifest.json').read_text(encoding='utf-8'))
-          version = manifest['version']
-          expected = os.environ['EXPECTED_VERSION']
-          if not re.fullmatch(r'\d+(?:\.\d+){1,3}', expected):
-              raise SystemExit('Invalid expected_version')
+          import json
+          import os
+          import re
+
+          with open("src/manifest.json", encoding="utf-8") as f:
+              manifest = json.load(f)
+
+          version = manifest["version"]
+          expected = os.environ["EXPECTED_VERSION"]
+
+          if not re.fullmatch(r"\d+(?:\.\d+){1,3}", version):
+              raise SystemExit(f"Invalid version: {version}")
+
           if version != expected:
-              raise SystemExit(f'Version mismatch: manifest={version}, expected={expected}')
-          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as out:
-              out.write(f'version={version}\n')
-          print(f'Validated version: {version}')
+              raise SystemExit(
+                  f"Version mismatch: {version} != {expected}"
+              )
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"version={version}\n")
+              f.write(f"tag=v{version}\n")
+
+          print(f"Astral version: {version}")
           PY
 
-      - name: Build shared ZIP
+      - name: Build extension ZIP
         env:
-          EXPECTED_VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           mkdir -p dist
-          python scripts/release.py build --source src --output "dist/astral-${EXPECTED_VERSION}.zip"
-          python - <<'PY'
-          import json, os, zipfile
-          from pathlib import Path
-          version = os.environ['EXPECTED_VERSION']
-          package = Path(f'dist/astral-{version}.zip')
-          with zipfile.ZipFile(package) as archive:
-              if 'manifest.json' not in archive.namelist():
-                  raise SystemExit('ZIP root must contain manifest.json')
-              packaged_version = json.loads(archive.read('manifest.json'))['version']
-              if packaged_version != version:
-                  raise SystemExit(f'ZIP version mismatch: {packaged_version}')
-          print(f'Package verified: {package}')
-          PY
-          cd dist
-          sha256sum "astral-${EXPECTED_VERSION}.zip" > SHA256SUMS.txt
 
-      - name: Upload shared package artifact
+          python scripts/release.py build \
+            --source src \
+            --output "dist/astral-${VERSION}.zip"
+
+      - name: Generate SHA256 checksum
+        run: |
+          cd dist
+          sha256sum astral-*.zip > SHA256SUMS.txt
+
+      - name: Upload shared package
         uses: actions/upload-artifact@v4
         with:
           name: extension-package
           path: |
-            dist/astral-${{ steps.version.outputs.version }}.zip
+            dist/astral-*.zip
             dist/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 7
 
   publish-chrome:
-    name: Upload / publish Chrome
+    name: Publish Chrome Web Store
     needs: build
-    if: ${{ inputs.target == 'both' || inputs.target == 'chrome' }}
+
+    if: >-
+      ${{
+        inputs.target == 'both' ||
+        inputs.target == 'chrome'
+      }}
+
     runs-on: ubuntu-latest
     environment: extension-release
+
     steps:
-      - name: Check out repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install dependencies
         run: python -m pip install requests
 
-      - name: Download shared ZIP
+      - name: Download shared package
         uses: actions/download-artifact@v4
         with:
           name: extension-package
           path: release-artifact
 
-      - name: Verify package checksum
-        working-directory: release-artifact
-        run: sha256sum -c SHA256SUMS.txt
-
-      - name: Upload / publish Chrome extension
+      - name: Publish Chrome extension
         env:
           CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
           CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
@@ -138,38 +149,47 @@ jobs:
           UPLOAD_ONLY: ${{ inputs.upload_only }}
         run: |
           args=()
-          if [[ "$UPLOAD_ONLY" == 'true' ]]; then args+=(--upload-only); fi
-          python scripts/release.py chrome --package "release-artifact/astral-${EXPECTED_VERSION}.zip" "${args[@]}"
+
+          if [[ "$UPLOAD_ONLY" == "true" ]]; then
+            args+=(--upload-only)
+          fi
+
+          python scripts/release.py chrome \
+            --package "release-artifact/astral-${EXPECTED_VERSION}.zip" \
+            "${args[@]}"
 
   publish-edge:
-    name: Upload / publish Edge
+    name: Publish Microsoft Edge Add-ons
     needs: build
-    if: ${{ inputs.target == 'both' || inputs.target == 'edge' }}
+
+    if: >-
+      ${{
+        inputs.target == 'both' ||
+        inputs.target == 'edge'
+      }}
+
     runs-on: ubuntu-latest
     environment: extension-release
+
     steps:
-      - name: Check out repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install dependencies
         run: python -m pip install requests
 
-      - name: Download shared ZIP
+      - name: Download shared package
         uses: actions/download-artifact@v4
         with:
           name: extension-package
           path: release-artifact
 
-      - name: Verify package checksum
-        working-directory: release-artifact
-        run: sha256sum -c SHA256SUMS.txt
-
-      - name: Upload / publish Edge extension
+      - name: Publish Edge extension
         env:
           EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
           EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
@@ -178,55 +198,170 @@ jobs:
           UPLOAD_ONLY: ${{ inputs.upload_only }}
         run: |
           args=()
-          if [[ "$UPLOAD_ONLY" == 'true' ]]; then args+=(--upload-only); fi
-          python scripts/release.py edge --package "release-artifact/astral-${EXPECTED_VERSION}.zip" "${args[@]}"
+
+          if [[ "$UPLOAD_ONLY" == "true" ]]; then
+            args+=(--upload-only)
+          fi
+
+          python scripts/release.py edge \
+            --package "release-artifact/astral-${EXPECTED_VERSION}.zip" \
+            "${args[@]}"
 
   release:
     name: Create GitHub Release
-    needs: [build, publish-chrome, publish-edge]
+
+    needs:
+      - build
+      - publish-chrome
+      - publish-edge
+
     if: >-
-      ${{ always() &&
-          inputs.target == 'both' &&
-          inputs.upload_only == false &&
-          needs.build.result == 'success' &&
-          needs.publish-chrome.result == 'success' &&
-          needs.publish-edge.result == 'success' }}
+      ${{
+        always() &&
+        github.ref == 'refs/heads/master' &&
+        inputs.target == 'both' &&
+        inputs.upload_only == false &&
+        needs.build.result == 'success' &&
+        needs.publish-chrome.result == 'success' &&
+        needs.publish-edge.result == 'success'
+      }}
+
     runs-on: ubuntu-latest
+
     permissions:
       contents: write
+
     steps:
-      - name: Check out repository
+      - name: Checkout full Git history
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Download shared ZIP and checksum
+      - name: Download shared package
         uses: actions/download-artifact@v4
         with:
           name: extension-package
           path: release-artifact
 
-      - name: Verify package checksum
-        working-directory: release-artifact
-        run: sha256sum -c SHA256SUMS.txt
+      - name: Check existing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.build.outputs.tag }}
+        run: |
+          if git rev-parse -q --verify \
+            "refs/tags/${TAG}" >/dev/null; then
+            echo "Tag ${TAG} already exists."
+            exit 1
+          fi
 
-      - name: Create Release
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release ${TAG} already exists."
+            exit 1
+          fi
+
+      - name: Generate release notes
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+          TAG: ${{ needs.build.outputs.tag }}
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          import subprocess
+          from pathlib import Path
+
+          version = os.environ["VERSION"]
+          tag = os.environ["TAG"]
+
+          def git(*args):
+              return subprocess.check_output(
+                  ["git", *args],
+                  text=True
+              ).strip()
+
+          def version_key(value):
+              match = re.fullmatch(
+                  r"v(\d+(?:\.\d+){1,3})",
+                  value
+              )
+              if not match:
+                  return None
+              return tuple(
+                  int(x) for x in match.group(1).split(".")
+              )
+
+          tags = git(
+              "tag",
+              "--merged",
+              "HEAD",
+              "--list",
+              "v*"
+          ).splitlines()
+
+          current = version_key(tag)
+
+          previous_tags = [
+              t for t in tags
+              if version_key(t) is not None
+              and version_key(t) < current
+          ]
+
+          lines = ["## 更新日志", ""]
+
+          if previous_tags:
+              previous = max(
+                  previous_tags,
+                  key=version_key
+              )
+
+              changes = git(
+                  "log",
+                  "--pretty=format:- %s (%h)",
+                  f"{previous}..HEAD",
+                  "--",
+                  "src/"
+              )
+
+              lines.append(
+                  changes or "No changes in `src/`."
+              )
+          else:
+              lines.append("Initial release.")
+
+          Path("release-notes.md").write_text(
+              "\n".join(lines) + "\n",
+              encoding="utf-8"
+          )
+
+          print(
+              Path("release-notes.md").read_text()
+          )
+          PY
+
+      - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.build.outputs.version }}
+          TAG: ${{ needs.build.outputs.tag }}
         run: |
-          TAG="v${VERSION}"
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG already exists; refusing to overwrite it."
-            exit 1
-          fi
-          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists; refusing to overwrite it."
-            exit 1
-          fi
           gh release create "$TAG" \
             "release-artifact/astral-${VERSION}.zip" \
-            release-artifact/SHA256SUMS.txt \
+            "release-artifact/SHA256SUMS.txt" \
             --title "$VERSION" \
-            --generate-notes \
+            --notes-file release-notes.md \
             --target "$GITHUB_SHA"
+
+      - name: Write release summary
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+          TAG: ${{ needs.build.outputs.tag }}
+        run: |
+          {
+            echo "## Astral ${VERSION}"
+            echo ""
+            echo "- Release title: ${VERSION}"
+            echo "- Git tag: ${TAG}"
+            echo "- Chrome: submitted"
+            echo "- Edge: submitted"
+            echo "- Release notes: src/ only"
+          } >> "$GITHUB_STEP_SUMMARY"
