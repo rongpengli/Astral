@@ -5,8 +5,9 @@
 /* Shared, versioned local configuration; obsolete weather fields are discarded. */
 'use strict';
 const AstralStore=(()=>{
- const KEY='astral.web.settings.v1';
- const BUILD='1.12.5-import2';
+ const KEY='astral.web.settings'; // local notification key, not the extension's config store
+ const BUILD=chrome.runtime.getManifest().version;
+ const INITIALIZED_BUILD='__astralRuntimeCacheVersion';
  const {validate}=AstralSchema;
  // Resolve public favicons using independent providers concurrently.
  // The first successfully decoded image wins; private hosts never leave the browser.
@@ -19,8 +20,8 @@ const AstralStore=(()=>{
   }catch{return null}
  }
  const GENERATION='astral.cache.generation';
- const ICON_CACHE='astral.extension.icons.v2',ICON_TTL=7*86400000;
- const ICON_FAILURES='astral.extension.icon-failures.v1',FAILURE_TTL=24*3600000;
+ const ICON_CACHE='astral.extension.icons',ICON_TTL=7*86400000;
+ const ICON_FAILURES='astral.extension.icon-failures',FAILURE_TTL=24*3600000;
  const cacheGeneration=()=>localStorage.getItem(GENERATION)||'0';
  const iconRecords=()=>{try{return JSON.parse(localStorage.getItem(ICON_CACHE)||'{}')||{}}catch{return {}}};
  function saveIconRecord(url,icon){
@@ -35,7 +36,6 @@ const AstralStore=(()=>{
  const iconFailures=()=>{try{return JSON.parse(localStorage.getItem(ICON_FAILURES)||'{}')||{}}catch{return {}}};
  function failureState(url){
   const entry=iconFailures()[url];
-  if(typeof entry==='number')return {count:1,until:entry,updated:entry-FAILURE_TTL};
   return entry&&typeof entry==='object'?entry:{count:0,until:0,updated:0};
  }
  function failedRecently(url){return failureState(url).until>Date.now()}
@@ -96,10 +96,7 @@ const AstralStore=(()=>{
  function setFavicon(img,site,fallback){
   const custom=site.iconMode==='custom'&&typeof site.icon==='string'&&!!site.icon.trim();
   const manual=custom?site.icon.trim():null;
-  const previous=custom?null:iconRecords()[site.url];
-  // Discard invalid image URLs cached by v1.12.8's old favicon.im endpoint.
-  const saved=previous&&/^https:\/\/favicon\.im\//i.test(previous.url||'')?null:previous;
-  if(previous&&!saved)dropIconRecord(site.url);
+  const saved=custom?null:iconRecords()[site.url];
   const started=cacheGeneration();let serial=0,refreshing=false;
   function display(src,fromDiscovery=false){
    const token=++serial;
@@ -296,31 +293,43 @@ const AstralStore=(()=>{
  }
  function safeGet(key){try{return localStorage.getItem(key)}catch(e){console.warn('存储不可读取',e);return null}}
  function safeSet(key,value){try{localStorage.setItem(key,value)}catch(e){throw Error('浏览器无法保存设置：'+(e.message||e))}}
+ // Serialize cache resets across simultaneously opened new-tab pages.
+ async function refreshOnBuildChange(){
+  const refresh=async()=>{
+   const state=await chrome.storage.local.get(INITIALIZED_BUILD);
+   if(state[INITIALIZED_BUILD]===BUILD)return;
+   await clearRuntimeCaches();
+   await chrome.storage.local.set({[INITIALIZED_BUILD]:BUILD});
+   // Obsolete markers and snapshots are no longer used after user data validation.
+   await chrome.storage.local.remove(['__astralExtensionBuild','__astralBefore1125']);
+  };
+  if(navigator.locks?.request)await navigator.locks.request('astral-extension-cache-upgrade',refresh);
+  else await refresh();
+ }
  let snapshot=validate({}), pending=Promise.resolve(), initialized=false, writes=0;
  const KEYS=['config','sites','css'];
  const ready=(async()=>{
-  let raw=await chrome.storage.local.get([...KEYS,'__astralExtensionBuild','__astralBefore1125']);
+  let raw=await chrome.storage.local.get(KEYS);
   const complete=raw.config&&Array.isArray(raw.sites)&&raw.css&&
    Object.keys(ASTRAL_DEFAULTS.config).every(key=>Object.hasOwn(raw.config,key));
   if(!complete)await AstralSchema.loadDefaults();
-  if(raw.__astralExtensionBuild!==BUILD){
-   // Retain an exact, local pre-upgrade snapshot, including obsolete wallpaper fields.
-   await chrome.storage.local.set({__astralBefore1125:raw.__astralBefore1125||{at:Date.now(),config:raw.config||{},sites:raw.sites||[],css:raw.css||{}},__astralExtensionBuild:BUILD});
-   for(const key of ['astral.weather.last-success.v1','astral.bing.metadata.v2','astral.wallpaper.current','astral.wallpaper.selection.v1','astral.extension.icons.v2'])localStorage.removeItem(key);
-   try{indexedDB.deleteDatabase('astral-wallpaper-v1')}catch{}
-   iconLookups.clear();iconResolutions.clear();
-   if(localStorage.getItem('astral.wallpaper.legacy-pin')===null)localStorage.setItem('astral.wallpaper.legacy-pin',AstralCompat.config(raw.config||{}).autoChange===false&&localStorage.getItem('imageSrc')?'1':'0');
-  }
   if(!raw.config||!Array.isArray(raw.sites)||!raw.css){
    const result=await chrome.runtime.sendMessage({type:'ASTRAL_LOCAL_READY'});
    if(!result?.ok)throw Error(result?.error||'配置初始化失败');
   }
   raw=await chrome.storage.local.get(KEYS);
-  const canonical=AstralCompat.storage(validate(raw).config);delete canonical.syncEnabled;if(!AstralCompat.equal(canonical,raw.config||{})){await chrome.storage.local.set({config:canonical});raw.config=canonical}
+  const canonical=AstralCompat.storage(validate(raw).config);delete canonical.syncEnabled;
+  if(!AstralCompat.equal(canonical,raw.config||{})){
+   await chrome.storage.local.set({config:canonical});raw.config=canonical;
+  }
+  // The legacy pinned user image lives outside the Bing image cache.
+  if(localStorage.getItem('astral.wallpaper.legacy-pin')===null&&localStorage.getItem('imageSrc')){
+   localStorage.setItem('astral.wallpaper.legacy-pin',canonical.autoChange===false?'1':'0');
+  }
+  await refreshOnBuildChange();
   snapshot=validate(raw);initialized=true;
-  // Render the local snapshot now. Later cloud changes arrive through onChanged.
+  // Upgrade writes do not modify config/sites/css or the cloud sync state.
   void chrome.runtime.sendMessage({type:'ASTRAL_SYNC_READY'}).catch(error=>console.info('后台同步初始化未成功',error));
-  // Do not rewrite settings on every new tab or invalidate a sync merge base.
   return snapshot;
  })();
  function read(){if(!initialized)throw Error('配置尚未加载');return structuredClone(snapshot)}
@@ -351,24 +360,36 @@ const AstralStore=(()=>{
  }
  // Clear generated data only; preserve the freshly restored preset and sync settings.
  async function clearRuntimeCaches(){
-  // Invalidate pending writes across tabs before deleting generated data.
   localStorage.setItem(GENERATION,String(Date.now())+'-'+Math.random());
   iconLookups.clear();iconResolutions.clear();
   const failures=[];
   try{for(const key of Object.keys(localStorage)){
-   if(key.startsWith('astral.weather.')||key.startsWith('astral.bing.')||key.startsWith('astral.wallpaper.')||key===ICON_CACHE||key===ICON_FAILURES)localStorage.removeItem(key);
+   if(key.startsWith('astral.weather.')||key.startsWith('astral.bing.')||
+      (key.startsWith('astral.wallpaper.')&&key!=='astral.wallpaper.legacy-pin')||
+      key.startsWith('astral.extension.icons')||key.startsWith('astral.extension.icon-failures')||
+      key.startsWith('astral.web.icons')||key.startsWith('astral.web.icon-failures')||
+      key==='astral.cache.generation.v1')localStorage.removeItem(key);
   }}catch(e){failures.push('本地缓存：'+e.message)}
-  if('indexedDB' in window)try{
-   const database=await new Promise((resolve,reject)=>{
-    const req=indexedDB.open('astral-wallpaper-v1',1);
-    req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('images'))req.result.createObjectStore('images')};
-    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
-   });
-   try{await new Promise((resolve,reject)=>{
-    const tx=database.transaction('images','readwrite');tx.objectStore('images').clear();
-    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
-   })}finally{database.close()}
-  }catch(e){failures.push('壁纸图片：'+e.message)}
+  if('indexedDB' in window){
+   try{
+    const database=await new Promise((resolve,reject)=>{
+     const req=indexedDB.open('astral-wallpaper',1);
+     req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('images'))req.result.createObjectStore('images')};
+     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+    });
+    try{if(database.objectStoreNames.contains('images'))await new Promise((resolve,reject)=>{
+     const tx=database.transaction('images','readwrite');tx.objectStore('images').clear();
+     tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||Error('清理失败'));
+    })}finally{database.close()}
+   }catch(e){failures.push('壁纸图片：'+e.message)}
+   try{
+    await new Promise(resolve=>{
+     const req=indexedDB.deleteDatabase('astral-wallpaper-v1');
+     const timer=setTimeout(resolve,1500);
+     req.onsuccess=req.onerror=req.onblocked=()=>{clearTimeout(timer);resolve()};
+    });
+   }catch{}
+  }
   try{await chrome.storage.local.remove(['__astralDownloadedWallpaper'])}catch(e){failures.push('下载记录：'+e.message)}
   if('caches' in window)try{
    for(const name of await caches.keys())if(name.startsWith('astral-'))await caches.delete(name);

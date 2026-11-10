@@ -12,7 +12,7 @@ const AstralWeather=(()=>{
  function coordinateLabel(latitude,longitude){return Number(latitude).toFixed(3)+'°, '+Number(longitude).toFixed(3)+'°'}
  async function resolveCity(latitude,longitude,force=false){
   if(!Number.isFinite(Number(latitude))||!Number.isFinite(Number(longitude)))return null;
-  const key='astral.weather.city.v2:'+Number(latitude).toFixed(3)+','+Number(longitude).toFixed(3);
+  const key='astral.weather.city:'+Number(latitude).toFixed(3)+','+Number(longitude).toFixed(3);
   try{const cached=JSON.parse(AstralStore.safeGet(key)||'null');if(!force&&cached&&Date.now()-cached.at<(cached.name?86400000:300000))return cached.name}catch{}
   if(cityRequests.has(key))return cityRequests.get(key);
   const started=generation();
@@ -35,7 +35,7 @@ const AstralWeather=(()=>{
    }
    if(started===generation())try{
     AstralStore.safeSet(key,JSON.stringify({name,at:Date.now()}));
-    const keys=Object.keys(localStorage).filter(k=>k.startsWith('astral.weather.city.v2:'));
+    const keys=Object.keys(localStorage).filter(k=>k.startsWith('astral.weather.city:'));
     if(keys.length>32){keys.sort((a,b)=>{
      const at=k=>{try{return JSON.parse(localStorage.getItem(k)).at||0}catch{return 0}};
      return at(a)-at(b);
@@ -50,7 +50,7 @@ const AstralWeather=(()=>{
   const response=await fetch(url,{signal});if(!response.ok)throw Error('HTTP '+response.status);
   const data=await response.json();return (data.results||[]).filter(r=>Number.isFinite(r.latitude)&&Number.isFinite(r.longitude));
  }
- const CACHE_KEY='astral.weather.last-success.v1';
+ const CACHE_KEY='astral.weather.last-success';
  const MAX_AGE=24*60*60*1000;
  const STALE_AFTER=3*60*60*1000; // Three hours: visibly label older observations.
  function coords(config){return [Number(config.weatherLatitude),Number(config.weatherLongitude)]}

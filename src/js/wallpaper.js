@@ -4,7 +4,7 @@
 **************************************************/
 'use strict';
 const AstralWallpaper=(()=>{
- const DB='astral-wallpaper-v1', STORE='images', META='astral.bing.metadata.v2', CURRENT='astral.wallpaper.current';
+ const DB='astral-wallpaper', STORE='images', META='astral.bing.metadata', CURRENT='astral.wallpaper.current';
  const TTL=60*60*1000, GENERATION='astral.cache.generation';
  const generation=()=>localStorage.getItem(GENERATION)||'0';
  let bingController=new AbortController();
@@ -18,7 +18,7 @@ const AstralWallpaper=(()=>{
  const MAX_CACHE_BYTES=80*1024*1024,MAX_IMAGE_BYTES=15*1024*1024;
  function db(){return new Promise((resolve,reject)=>{if(!('indexedDB' in window))return reject(Error('IndexedDB unavailable'));const req=indexedDB.open(DB,1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(STORE))req.result.createObjectStore(STORE)};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
  async function get(key){const d=await db();return new Promise((resolve,reject)=>{const t=d.transaction(STORE,'readonly'),r=t.objectStore(STORE).get(key);r.onsuccess=()=>resolve(r.result?.blob||r.result);r.onerror=()=>reject(r.error);t.oncomplete=()=>d.close()})}
- const POLICY='astral.wallpaper.cache-policy.v1';
+ const POLICY='astral.wallpaper.cache-policy';
  function cachePolicy(config){
   return JSON.stringify([Math.min(8,Math.max(1,Math.trunc(Number(config.bingMaxHistory))||1)),config.useBigImage]);
  }
@@ -27,7 +27,7 @@ const AstralWallpaper=(()=>{
   if(!reset&&localStorage.getItem(POLICY)===policy)return;
   localStorage.setItem(POLICY,policy);
   if(reset){
-   localStorage.removeItem('astral.wallpaper.selection.v1');
+   localStorage.removeItem('astral.wallpaper.selection');
    const cached=cacheRead();
    if(cached)localStorage.setItem(META,JSON.stringify({...cached,updated:0}));
   }
