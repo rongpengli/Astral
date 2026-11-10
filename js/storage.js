@@ -56,16 +56,49 @@ const AstralStore=(()=>{
   return count;
  }
  function clearIconFailure(url){const records=iconFailures();if(url in records){delete records[url];try{localStorage.setItem(ICON_FAILURES,JSON.stringify(records))}catch{}}}
- function probeIcon(url,timeout=4800,generation=cacheGeneration()){
+ // The same manual URL shares one probe (and one failure counter update)
+ // even when several navigation entries use it concurrently.
+ const manualIconTasks=new Map();
+ const MANUAL_ICON_TIMEOUT=5000;
+ const INLINE_ICON_FALLBACK='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#737373"/><circle cx="8" cy="8" r="3.5" fill="white"/></svg>');
+ function probeIcon(url,timeout=4800,generation=cacheGeneration(),minimum=16,threshold=1){
   return new Promise((resolve,reject)=>{
    if(failedRecently(url)){reject(Error('图标地址处于失败冷却期'));return}
    const image=new Image();let done=false;
-   const finish=(ok)=>{if(done)return;done=true;clearTimeout(timer);image.onload=image.onerror=null;if(cacheGeneration()===generation){if(ok)clearIconFailure(url);else markIconFailure(url)}ok?resolve(url):reject(Error('图标加载失败'));};
-   const timer=setTimeout(()=>finish(false),timeout);
-   image.onload=()=>finish(image.naturalWidth>=16&&image.naturalHeight>=16);
+   const finish=(ok)=>{
+    if(done)return;
+    done=true;clearTimeout(timer);image.onload=image.onerror=null;
+    if(cacheGeneration()!==generation){reject(Error('图标任务已失效'));return}
+    if(ok)clearIconFailure(url);
+    else markIconFailure(url,threshold);
+    ok?resolve(url):reject(Error('图标加载失败或超时'));
+   };
+   const timer=setTimeout(()=>{
+    finish(false);
+    // Release a pending request; any late events have already been detached.
+    try{image.removeAttribute('src')}catch{}
+   },timeout);
+   image.onload=()=>finish(image.naturalWidth>=minimum&&image.naturalHeight>=minimum);
    image.onerror=()=>finish(false);
    image.src=url;
   });
+ }
+ function loadManualIcon(url,generation=cacheGeneration()){
+  const pending=manualIconTasks.get(url);
+  if(pending&&pending.generation===generation)return pending.task;
+  let task;
+  task=Promise.resolve().then(()=>{
+   if(cacheGeneration()!==generation)throw Error('图标任务已失效');
+   const state=failureState(url);
+   // A completed 24-hour cooldown starts a fresh three-attempt cycle.
+   if(state.count>=3&&state.until<=Date.now())clearIconFailure(url);
+   return probeIcon(url,MANUAL_ICON_TIMEOUT,generation,1,3);
+  }).finally(()=>{
+   if(manualIconTasks.get(url)?.task===task)manualIconTasks.delete(url);
+  });
+  manualIconTasks.set(url,{generation,task});
+  return task;
  }
  function siteFaviconURL(site){
   try{const u=new URL(site.url);return ['http:','https:'].includes(u.protocol)?u.origin+'/favicon.ico':null}catch{return null}
@@ -104,34 +137,48 @@ const AstralStore=(()=>{
   const custom=site.iconMode==='custom'&&typeof site.icon==='string'&&!!site.icon.trim();
   const manual=custom?site.icon.trim():null;
   const saved=custom?null:iconRecords()[site.url];
-  const started=cacheGeneration();let serial=0,refreshing=false;
+  const started=cacheGeneration();let serial=0,refreshing=false,displayTimer=null;
   function display(src,fromDiscovery=false){
+   clearTimeout(displayTimer);
    const token=++serial;
-   img.onerror=()=>{
-    if(token!==serial||cacheGeneration()!==started)return;
-    if(src===manual){
-     const failures=markIconFailure(manual,3);
-     display(fallback);
-     if(failures>=3)refreshFallback();
+   const current=()=>token===serial&&cacheGeneration()===started;
+   function failed(){
+    if(!current())return;
+    clearTimeout(displayTimer);
+    if(src===fallback){
+     // A broken local SVG must not recursively request itself.
+     ++serial;img.onload=img.onerror=null;img.src=INLINE_ICON_FALLBACK;
      return;
     }
-    if(src!==fallback){
-     markIconFailure(src);
-     if(saved?.url===src)dropIconRecord(site.url);
+    if(src===manual){
+     // Manual probe failure is recorded once in loadManualIcon(), never per tile.
+     display(fallback);
+     return;
     }
+    markIconFailure(src);
+    if(saved?.url===src)dropIconRecord(site.url);
     display(fallback);
-    if(src!==fallback)refreshFallback();
-   };
+    refreshFallback();
+   }
+   img.onerror=failed;
    img.onload=()=>{
-    if(token!==serial||cacheGeneration()!==started)return;
-    if(src===manual){clearIconFailure(manual);saveIconRecord('custom:'+manual,manual)}
-    else {
+    if(!current())return;
+    clearTimeout(displayTimer);
+    if(src!==manual&&src!==fallback){
      clearIconFailure(src);
-     // Store only an image that the visible navigation element actually loaded.
-     if(fromDiscovery&&!custom&&src!==fallback)saveIconRecord(site.url,src);
+     // Only cache a discovered URL after the visible tile loads successfully.
+     if(fromDiscovery&&!custom)saveIconRecord(site.url,src);
     }
    };
    img.src=src;
+   // Never leave a visible navigation tile pending indefinitely.
+   if(src!==fallback&&!src.startsWith('data:')){
+    displayTimer=setTimeout(()=>{
+     if(!current())return;
+     if(img.complete&&img.naturalWidth>0)return;
+     failed();
+    },MANUAL_ICON_TIMEOUT);
+   }
   }
   function refreshFallback(){
    if(refreshing||cacheGeneration()!==started)return;
@@ -139,25 +186,28 @@ const AstralStore=(()=>{
    resolveIcon(site,started).then(found=>{
     if(cacheGeneration()!==started)return;
     if(!found||failedRecently(found))return;
-    // Source-level failure records are the only cooldown gate.
     if(!custom){
-     // Never overwrite a manual edit made while discovery was running.
+     // Do not overwrite manual edits made during discovery.
      const latest=(read().sites||[]).some(group=>(group.list||[]).some(entry=>entry.url===site.url&&entry.title===site.title&&entry.iconMode==='custom'&&typeof entry.icon==='string'&&!!entry.icon.trim()));
      if(latest||cacheGeneration()!==started)return;
     }
-    // A detached Image probe may succeed while the actual navigation image fails.
-    // Commit cache only after the latter's onload, including refresh of an old URL.
     if(img.src===found&&img.complete&&img.naturalWidth>=16&&img.naturalHeight>=16){
      if(!custom)saveIconRecord(site.url,found);
     }else display(found,true);
    }).catch(()=>{}).finally(()=>{refreshing=false});
   }
   if(custom){
-   // A manual URL is retried after its 24-hour cooldown; restart its 3-failure count.
-   const state=failureState(manual);
-   if(state.count>=3&&state.until<=Date.now())clearIconFailure(manual);
-   if(failedRecently(manual)){display(fallback);refreshFallback()}
-   else display(manual);
+   // Show a local placeholder while the shared off-screen probe is pending.
+   display(fallback);
+   if(failedRecently(manual))refreshFallback();
+   else loadManualIcon(manual,started).then(()=>{
+    if(cacheGeneration()!==started)return;
+    display(manual);
+   }).catch(()=>{
+    if(cacheGeneration()!==started)return;
+    // All tiles see the same completed failure count; only the task increments it.
+    if(failureState(manual).count>=3&&failedRecently(manual))refreshFallback();
+   });
   }else{
    const cached=saved?.url;
    if(cached&&!failedRecently(cached)){
@@ -453,7 +503,7 @@ const AstralStore=(()=>{
  // Reset only derived data, without touching configuration, uploads or custom URLs.
  async function clearRuntimeCaches(){
   localStorage.setItem(CACHE_GENERATION,String(Date.now())+'-'+Math.random());
-  iconLookups.clear();iconResolutions.clear();
+  iconLookups.clear();iconResolutions.clear();manualIconTasks.clear();
   const errors=[];
   try{
    for(const key of Object.keys(localStorage)){
