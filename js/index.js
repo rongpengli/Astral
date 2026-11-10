@@ -61,7 +61,7 @@ const myNewTabWE={config:{},sites:[],css:{},bingIndex:0,images:[],busy:false,
   try{
    const count=Math.max(1,Math.min(8,Number(this.config.bingMaxHistory)||1));
    const today=new Date().toLocaleDateString('en-CA');
-   const stateKey='astral.wallpaper.selection.v1';
+   const stateKey='astral.wallpaper.selection';
    let state=null;
    try{state=JSON.parse(AstralStore.safeGet(stateKey)||'null')}catch{}
    // On a new calendar date, begin again at the latest wallpaper, like the extension.
@@ -82,7 +82,7 @@ const myNewTabWE={config:{},sites:[],css:{},bingIndex:0,images:[],busy:false,
   try{
    const count=Math.max(1,Math.min(8,Number(this.config.bingMaxHistory)||1));
    const today=new Date().toLocaleDateString('en-CA');
-   const key='astral.wallpaper.selection.v1';
+   const key='astral.wallpaper.selection';
    let state=null;
    try{state=JSON.parse(AstralStore.safeGet(key)||'null')}catch{}
    if(!state||state.date!==today||state.count!==count)state={date:today,count,index:0};
@@ -99,11 +99,11 @@ const myNewTabWE={config:{},sites:[],css:{},bingIndex:0,images:[],busy:false,
   $id('change-wallpaper').addEventListener('click',e=>{e.preventDefault();this.changeWallpaper()});
   addEventListener('keydown',e=>{if(e.ctrlKey&&e.key.toLowerCase()==='q')document.querySelectorAll('[name="yooo"]').forEach(n=>n.hidden=false)});
   addEventListener('keyup',()=>document.querySelectorAll('[name="yooo"]').forEach(n=>n.hidden=true));
-  addEventListener('storage',e=>{if(e.key==='astral.wallpaper.selection.v1'&&e.newValue===null){this.refreshWallpaper(true);return}if(e.key!=='astral.web.settings.v1'&&e.key!==null)return;const data=AstralStore.read();const old=this.config;const oldCss=this.css;this.config=data.config;AstralWallpaper.configure(this.config).catch(console.warn);this.sites=data.sites;this.css=data.css;document.title=this.config.title;this.initSites();if(oldCss.index!==this.css.index)this.initCss();if(old.weatherLatitude!==this.config.weatherLatitude||old.weatherLongitude!==this.config.weatherLongitude||old.weatherCity!==this.config.weatherCity||old.weatherMode!==this.config.weatherMode||old.weatherLocationMode!==this.config.weatherLocationMode)AstralWeather.refresh(this.config);if(old.useBigImage!==this.config.useBigImage||old.bingMaxHistory!==this.config.bingMaxHistory)this.refreshWallpaper()});
+  addEventListener('storage',e=>{if(e.key==='astral.wallpaper.selection'&&e.newValue===null){this.refreshWallpaper(true);return}if(e.key!=='astral.web.settings'&&e.key!==null)return;const data=AstralStore.read();const old=this.config;const oldCss=this.css;this.config=data.config;AstralWallpaper.configure(this.config).catch(console.warn);this.sites=data.sites;this.css=data.css;document.title=this.config.title;this.initSites();if(oldCss.index!==this.css.index)this.initCss();if(old.weatherLatitude!==this.config.weatherLatitude||old.weatherLongitude!==this.config.weatherLongitude||old.weatherCity!==this.config.weatherCity||old.weatherMode!==this.config.weatherMode||old.weatherLocationMode!==this.config.weatherLocationMode)AstralWeather.refresh(this.config);if(old.useBigImage!==this.config.useBigImage||old.bingMaxHistory!==this.config.bingMaxHistory)this.refreshWallpaper()});
   // Passive location refresh only for an explicitly enabled auto-location mode.
   // Permission must already be granted; never prompt simply because the tab regained focus.
   const LOCATION_INTERVAL=6*60*60*1000;
-  const LOCATION_ATTEMPT_KEY='astral.weather.auto-location-attempt.v1';
+  const LOCATION_ATTEMPT_KEY='astral.weather.auto-location-attempt';
   let locating=false;
   const updateLocationOnReturn=async()=>{
    if(locating||this.config.weatherMode==='off'||this.config.weatherLocationMode!=='auto'||document.visibilityState!=='visible'||!isSecureContext||!navigator.geolocation||!navigator.permissions?.query)return;

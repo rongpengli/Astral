@@ -8,10 +8,11 @@ const ASTRAL_DEFAULTS = {
  sites:[],css:{version:0,index:''}
 };
 const AstralStore=(()=>{
- const KEY='astral.web.settings.v1';
- const CACHE_GENERATION='astral.cache.generation.v1';
- const ICON_CACHE='astral.web.icons.v2',ICON_TTL=7*86400000;
- const ICON_FAILURES='astral.web.icon-failures.v1',FAILURE_TTL=24*3600000;
+ const KEY='astral.web.settings', LEGACY_KEY='astral.web.settings.v1';
+ const BUILD='1.12.8', INITIALIZED_BUILD='astral.web.initialized-build';
+ const CACHE_GENERATION='astral.cache.generation';
+ const ICON_CACHE='astral.web.icons',ICON_TTL=7*86400000;
+ const ICON_FAILURES='astral.web.icon-failures',FAILURE_TTL=24*3600000;
  // Shared per-page lookup de-duplication for automatic icon discovery.
  const iconLookups=new Map();
  // Normalize retired provider URLs left by older configuration exports.
@@ -42,7 +43,6 @@ const AstralStore=(()=>{
  const iconFailures=()=>{try{return JSON.parse(localStorage.getItem(ICON_FAILURES)||'{}')||{}}catch{return {}}};
  function failureState(url){
   const entry=iconFailures()[url];
-  if(typeof entry==='number')return {count:1,until:entry,updated:entry-FAILURE_TTL};
   return entry&&typeof entry==='object'?entry:{count:0,until:0,updated:0};
  }
  function failedRecently(url){return failureState(url).until>Date.now()}
@@ -103,10 +103,7 @@ const AstralStore=(()=>{
  function setFavicon(img,site,fallback){
   const custom=site.iconMode==='custom'&&typeof site.icon==='string'&&!!site.icon.trim();
   const manual=custom?site.icon.trim():null;
-  const previous=custom?null:iconRecords()[site.url];
-  // Discard invalid image URLs cached by v1.12.8's old favicon.im endpoint.
-  const saved=previous&&/^https:\/\/favicon\.im\//i.test(previous.url||'')?null:previous;
-  if(previous&&!saved)dropIconRecord(site.url);
+  const saved=custom?null:iconRecords()[site.url];
   const started=cacheGeneration();let serial=0,refreshing=false;
   function display(src,fromDiscovery=false){
    const token=++serial;
@@ -359,7 +356,7 @@ const AstralStore=(()=>{
  }
  function safeGet(key){try{return localStorage.getItem(key)}catch(e){console.warn('存储不可读取',e);return null}}
  function safeSet(key,value){try{localStorage.setItem(key,value)}catch(e){throw Error('浏览器无法保存设置：'+(e.message||e))}}
- function read(){let data={};try{const s=safeGet(KEY);if(s)data=JSON.parse(s);else{for(const k of ['config','sites','css']){const v=safeGet(k);if(v!==null)data[k]=JSON.parse(v)}}}catch(e){console.warn('读取配置失败',e)}try{
+ function read(){let data={};try{const s=safeGet(KEY)??safeGet(LEGACY_KEY);if(s)data=JSON.parse(s);else{for(const k of ['config','sites','css']){const v=safeGet(k);if(v!==null)data[k]=JSON.parse(v)}}}catch(e){console.warn('读取配置失败',e)}try{
   const normalized=validate(data);
   const hadRetired=Array.isArray(data.sites)&&data.sites.some(group=>Array.isArray(group.list)&&group.list.some(site=>retiredIconURL(site.icon)&&site.iconMode!=='custom'));
   if(hadRetired){try{safeSet(KEY,JSON.stringify(normalized))}catch(e){console.warn('旧图标配置迁移未能保存',e)}}
@@ -367,7 +364,34 @@ const AstralStore=(()=>{
  }catch(e){console.warn('配置校验失败',e);return validate({})}}
  // Resolve from this script so a nested deployment and every settings page use the same preset.
  const presetURL=new URL('../AstralNewTab.json',document.currentScript.src);
- const hasSettings=()=>[KEY,'config','sites','css'].some(key=>safeGet(key)!==null);
+ const hasSettings=()=>[KEY,LEGACY_KEY,'config','sites','css'].some(key=>safeGet(key)!==null);
+ // Only user settings need a one-time rename; all generated caches are disposable.
+ function adoptLegacySettings(){
+  const legacy=safeGet(LEGACY_KEY);
+  if(legacy===null)return;
+  const current=safeGet(KEY);
+  if(current!==null){
+   // A verified new copy is authoritative; an interrupted previous migration
+   // may have left the old key behind.
+   try{validate(JSON.parse(current));localStorage.removeItem(LEGACY_KEY);return}catch{}
+  }
+  const normalized=validate(JSON.parse(legacy));
+  const value=JSON.stringify(normalized);
+  safeSet(KEY,value);
+  if(safeGet(KEY)!==value)throw Error('用户配置迁移校验失败');
+  localStorage.removeItem(LEGACY_KEY);
+ }
+ async function refreshOnBuildChange(){
+  const refresh=async()=>{
+   if(safeGet(INITIALIZED_BUILD)===BUILD)return;
+   const errors=await clearRuntimeCaches();
+   if(errors.length){console.warn('缓存清理未完成；下次启动将重试',errors);return}
+   safeSet(INITIALIZED_BUILD,BUILD);
+  };
+  if(navigator.locks?.request)await navigator.locks.request('astral-web-cache-upgrade',refresh);
+  else await refresh();
+ }
+
  async function readPreset(){
   const response=await fetch(presetURL,{cache:'no-store',signal:AbortSignal.timeout(10000)});
   if(!response.ok)throw Error('无法读取预设 AstralNewTab.json');
@@ -385,16 +409,18 @@ const AstralStore=(()=>{
   return initializing;
  }
  async function initializeLocal(){
+  try{adoptLegacySettings()}catch(e){throw Error('原有用户配置迁移失败，已保留旧数据：'+String(e.message||e))}
   const saved=safeGet(KEY);
   if(saved){
+   let complete=false;
    try{
     const data=JSON.parse(saved);
     if(data.config&&Array.isArray(data.sites)&&data.css&&
        Object.keys(ASTRAL_DEFAULTS.config).every(key=>Object.hasOwn(data.config,key))){
-     validate(data);
-     return false;
+     validate(data);complete=true;
     }
    }catch{/* Validate older settings after loading their missing defaults. */}
+   if(complete){await refreshOnBuildChange();return false}
   }
   const preset=await readPreset();
   if(hasSettings()){
@@ -417,36 +443,48 @@ const AstralStore=(()=>{
     // Invalid saved data must never silently turn into a new empty collection.
     throw Error('本机配置无法读取，请检查或重新导入。'+String(error.message||error));
    }
+   await refreshOnBuildChange();
    return false;
   }
   safeSet(KEY,JSON.stringify(preset));
+  await refreshOnBuildChange();
   return true;
  }
+ // Reset only derived data, without touching configuration, uploads or custom URLs.
  async function clearRuntimeCaches(){
-  // Invalidate pending asynchronous requests before clearing storage.
   localStorage.setItem(CACHE_GENERATION,String(Date.now())+'-'+Math.random());
   iconLookups.clear();iconResolutions.clear();
   const errors=[];
   try{
    for(const key of Object.keys(localStorage)){
-    if(key.startsWith('astral.weather.city.v2:')||[
-     ICON_CACHE,ICON_FAILURES,'astral.web.custom-icon-failures.v1','astral.weather.last-success.v1','astral.bing.metadata.v2',
-     'astral.wallpaper.current','astral.wallpaper.selection.v1',
-     'astral.wallpaper.cache-policy.v1'
-    ].includes(key))localStorage.removeItem(key);
+    if(key.startsWith('astral.weather.')||key.startsWith('astral.bing.')||
+       key.startsWith('astral.wallpaper.')||key.startsWith('astral.web.icons')||
+       key.startsWith('astral.web.icon-failures')||key.startsWith('astral.web.custom-icon-failures')||
+       key==='astral.cache.generation.v1')localStorage.removeItem(key);
    }
   }catch(e){errors.push('本地缓存：'+e.message)}
-  try{
-   const database=await new Promise((resolve,reject)=>{
-    const req=indexedDB.open('astral-wallpaper-v1',1);
-    req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('images'))req.result.createObjectStore('images')};
-    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
-   });
-   try{if(database.objectStoreNames.contains('images'))await new Promise((resolve,reject)=>{
-    const tx=database.transaction('images','readwrite');tx.objectStore('images').clear();
-    tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error||Error('清理失败'));
-   })}finally{database.close()}
-  }catch(e){errors.push('壁纸图片：'+e.message)}
+  if('indexedDB' in window){
+   try{
+    const database=await new Promise((resolve,reject)=>{
+     const req=indexedDB.open('astral-wallpaper',1);
+     req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('images'))req.result.createObjectStore('images')};
+     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+    });
+    try{if(database.objectStoreNames.contains('images'))await new Promise((resolve,reject)=>{
+     const tx=database.transaction('images','readwrite');tx.objectStore('images').clear();
+     tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||Error('清理失败'));
+    })}finally{database.close()}
+   }catch(e){errors.push('壁纸图片：'+e.message)}
+   // Old image database contains only generated Bing blobs. A blocked delete
+   // is nonfatal because the new code never reads that database.
+   try{
+    await new Promise(resolve=>{
+     const req=indexedDB.deleteDatabase('astral-wallpaper-v1');
+     const timer=setTimeout(resolve,1500);
+     req.onsuccess=req.onerror=req.onblocked=()=>{clearTimeout(timer);resolve()};
+    });
+   }catch{}
+  }
   if('caches' in window)try{
    const names=await caches.keys();
    for(const name of names)if(name.startsWith('astral-'))await caches.delete(name);

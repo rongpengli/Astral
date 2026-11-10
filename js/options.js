@@ -40,7 +40,7 @@ let myNewTabWE = {
         locationWarning='；自动定位未成功，已使用杭州作为默认位置，可在天气设置中重新定位';
       }
     }
-    const imported=AstralStore.replace(data);for(const id of ['weather-city','weather-lat','weather-lon'])delete $id(id).dataset.dirty;myNewTabWE.config=imported.config;myNewTabWE.sites=imported.sites;myNewTabWE.initConf();myNewTabWE.renderSites();dispatchEvent(new StorageEvent('storage',{key:'astral.web.settings.v1'}));
+    const imported=AstralStore.replace(data);for(const id of ['weather-city','weather-lat','weather-lon'])delete $id(id).dataset.dirty;myNewTabWE.config=imported.config;myNewTabWE.sites=imported.sites;myNewTabWE.initConf();myNewTabWE.renderSites();dispatchEvent(new StorageEvent('storage',{key:'astral.web.settings'}));
     AstralStore.notify('已导入 '+imported.sites.length+' 个分组，'+imported.sites.reduce((n,g)=>n+g.list.length,0)+' 个网址'+locationWarning,'导入成功');
    }catch(e){myNewTabWE.notify(e.message,'导入配置失败')}finally{$id('import').disabled=false}};upload.click()});
   $id('export').addEventListener('click',async()=>{
@@ -372,7 +372,7 @@ let myNewTabWE = {
     editGroup:(name='',creating=false)=>new Promise(resolve=>{
         const modal=$id('group-modal'),input=$id('group-name');myNewTabWE.editing=true;
         $id('group-modal-heading').textContent=creating?'新增分组':'编辑分组';input.value=name;
-        const finish=value=>{modal.style.display='none';myNewTabWE.editing=false;modal.onkeydown=null;resolve(value);if(value===null)queueMicrotask(()=>dispatchEvent(new StorageEvent('storage',{key:'astral.web.settings.v1'})))};
+        const finish=value=>{modal.style.display='none';myNewTabWE.editing=false;modal.onkeydown=null;resolve(value);if(value===null)queueMicrotask(()=>dispatchEvent(new StorageEvent('storage',{key:'astral.web.settings'})))};
         $id('group-confirm').onclick=()=>finish(input.value.trim());$id('group-cancel').onclick=()=>finish(null);
         modal.onkeydown=event=>{if(event.key==='Escape'){event.preventDefault();finish(null)}else if(event.key==='Enter'){event.preventDefault();finish(input.value.trim())}};
         modal.style.display='flex';input.focus();input.select?.();
@@ -405,7 +405,7 @@ let myNewTabWE = {
 			};
 			$id('edit-cancel').onclick = () => {
                 myNewTabWE.editing=false;
-                queueMicrotask(()=>dispatchEvent(new StorageEvent('storage',{key:'astral.web.settings.v1'})));
+                queueMicrotask(()=>dispatchEvent(new StorageEvent('storage',{key:'astral.web.settings'})));
 				$id('edit-modal').style.display = 'none';
 				$id('edit-modal').setAttribute('count', parseInt($id('edit-modal').getAttribute('count')) + 1);
 				resolve(false);
