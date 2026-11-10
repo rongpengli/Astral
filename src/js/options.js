@@ -392,11 +392,30 @@ let myNewTabWE = {
 			$id('edit-icon').value = site.icon || '';
             $id('edit-icon').dataset.autoFound = site.iconMode==='auto' ? (site.icon||'') : '';  
 			$id('edit-geticon').textContent = '自动获取';
-			$id('edit-confirm').onclick = () => {
+			$id('edit-confirm').onclick = async () => {
+                const button=$id('edit-confirm');
+                if(button.disabled)return;
+                const icon=$id('edit-icon').value.trim();
+                const automatic=!!icon && icon===$id('edit-icon').dataset.autoFound;
+                if(icon && !automatic){
+                    const validURL=(()=>{
+                        if(/^data:image\/(?:png|jpeg|gif|webp|svg\+xml|x-icon|vnd\.microsoft\.icon)(?:;[^,]*)?,/i.test(icon))return true;
+                        try{return ['http:','https:'].includes(new URL(icon).protocol)}catch(_){return false}
+                    })();
+                    if(!validURL){myNewTabWE.notify('请输入有效的 HTTP(S) 图片地址或图片 Data URL','图标地址无效');return}
+                    button.disabled=true;
+                    try{
+                        const img=new Image();
+                        img.src=icon;
+                        await Promise.race([img.decode(),new Promise((_,reject)=>setTimeout(()=>reject(Error('图片加载超时')),8000))]);
+                        if(!img.naturalWidth)throw Error('无法解码图片');
+                    }catch(e){myNewTabWE.notify('图标无法加载：'+e.message,'图标验证失败');return}
+                    finally{button.disabled=false}
+                }
 				myNewTabWE.editing=false;
                 site.title = $id('edit-title').value;
 				site.url = $id('edit-url').value;
-				site.icon = $id('edit-icon').value;
+				site.icon = icon;
                 site.iconMode = site.icon && site.icon === $id('edit-icon').dataset.autoFound ? 'auto' : 'custom';
 				$id('edit-modal').style.display = 'none';
 				$id('edit-modal').setAttribute('count', parseInt($id('edit-modal').getAttribute('count')) + 1);

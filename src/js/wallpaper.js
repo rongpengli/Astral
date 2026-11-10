@@ -5,7 +5,8 @@
 'use strict';
 const AstralWallpaper=(()=>{
  const DB='astral-wallpaper-v1', STORE='images', META='astral.bing.metadata.v2', CURRENT='astral.wallpaper.current';
- const TTL=60*60*1000;
+ const TTL=60*60*1000, GENERATION='astral.cache.generation';
+ const generation=()=>localStorage.getItem(GENERATION)||'0';
  let bingController=new AbortController();
  function setBingEnabled(enabled){
   if(!enabled)bingController.abort();
@@ -35,9 +36,11 @@ const AstralWallpaper=(()=>{
    throw error;
   }
  }
- async function updateCache(key,value){
+ async function updateCache(key,value,started=generation()){
+  if(started!==generation())return;
   if(key&&(!(value instanceof Blob)||!value.type.startsWith('image/')||!value.size||value.size>MAX_IMAGE_BYTES))return;
   const database=await db();
+  if(started!==generation()){database.close();return}
   try{
    await new Promise((resolve,reject)=>{
     const transaction=database.transaction(STORE,'readwrite');
@@ -54,6 +57,7 @@ const AstralWallpaper=(()=>{
       }
       cursor.continue();return;
      }
+     if(started!==generation()){transaction.abort();return}
      const [limit,size]=JSON.parse(localStorage.getItem(POLICY)||cachePolicy(AstralStore.read().config));
      const recent=(cacheRead()?.images||[]).slice(0,limit).map(entry=>urlFor(entry,size));
      const rank=url=>{const index=recent.indexOf(url);return index<0?limit:index};
@@ -75,11 +79,11 @@ const AstralWallpaper=(()=>{
  function normalizeAlternate(data){if(data&&Array.isArray(data.images))return normalize(data);const raw=data&&(data.url||data.image||data.imgurl);if(typeof raw!=='string')throw Error('Invalid alternate response');const u=new URL(raw);if(u.protocol!=='https:'||!/(^|\.)bing\.com$/.test(u.hostname))throw Error('Invalid image host');const id=u.searchParams.get('id');const match=(id||'').match(/^(OHR\.[A-Za-z0-9_-]+?)(?:_(?:UHD|1920x1080|1366x768))?\.jpg$/i);if(!match)throw Error('Invalid image id');return [{urlbase:'/th?id='+match[1],enddate:String(data.enddate||data.date||''),copyright:String(data.copyright||'')}];}
  function cacheRead(){try{const c=JSON.parse(localStorage.getItem(META)||'null');if(c&&Array.isArray(c.images)){const images=c.images.filter(valid);if(images.length)return {updated:Number(c.updated)||0,images}}}catch{}return null}
  function cacheWrite(images){try{localStorage.setItem(META,JSON.stringify({updated:Date.now(),images}))}catch{}}
- async function metadata(count=8,force=false){const signal=bingController.signal;signal.throwIfAborted();const n=Math.max(1,Math.min(8,Number(count)||8)),cached=cacheRead();if(!force&&cached&&Date.now()-cached.updated<TTL&&cached.images.length>=n)return cached.images.slice(0,n);
+ async function metadata(count=8,force=false){const started=generation();const signal=bingController.signal;signal.throwIfAborted();const n=Math.max(1,Math.min(8,Number(count)||8)),cached=cacheRead();if(!force&&cached&&Date.now()-cached.updated<TTL&&cached.images.length>=n)return cached.images.slice(0,n);
   const bing='https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n='+n+'&mkt=zh-CN';
   // The Bing JSON endpoint does not expose CORS. A public CORS proxy is attempted first;
   // direct Bing is a best-effort fallback for environments where it is allowed.
-  try{const direct=normalize(await request(bing,4500));if(direct.length>=n){cacheWrite(direct);return direct.slice(0,n)}}catch{}
+  try{const direct=normalize(await request(bing,4500));if(direct.length>=n){if(started===generation())cacheWrite(direct);return direct.slice(0,n)}}catch{}
   signal.throwIfAborted();
   const sources=[
    ()=>request('https://api.allorigins.win/raw?url='+encodeURIComponent(bing),5500),
@@ -88,7 +92,7 @@ const AstralWallpaper=(()=>{
    ()=>request('https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n='+n+'&mkt=zh-CN',4000),
    ()=>request('https://bing.lkin.cn/?region=cn',5500)
   ];
-  try{const images=await Promise.any(sources.map(async (source,i)=>{const data=await source();const found=i===4?normalizeAlternate(data):normalize(data);if(found.length<n)throw Error('Bing 返回的历史壁纸数量不足');return found}));cacheWrite(images);return images.slice(0,n)}catch{}
+  try{const images=await Promise.any(sources.map(async (source,i)=>{const data=await source();const found=i===4?normalizeAlternate(data):normalize(data);if(found.length<n)throw Error('Bing 返回的历史壁纸数量不足');return found}));if(started===generation())cacheWrite(images);return images.slice(0,n)}catch{}
   // Last known metadata is usable even if stale; never erase it after network failure.
   signal.throwIfAborted();
   if(cached)return cached.images.slice(0,n);
@@ -152,7 +156,7 @@ const AstralWallpaper=(()=>{
   if(blob){const objectUrl=URL.createObjectURL(blob);try{await preload(objectUrl)}catch{if(!current(token))return false;blob=null;await preload(url)}finally{URL.revokeObjectURL(objectUrl)}}else await preload(url);
   if(!apply(url,blob,token))return false;
   try{localStorage.setItem(CURRENT,JSON.stringify({url,name,enddate:entry.enddate||'',copyright:entry.copyright||'',size}))}catch{}
-  if(!blob)fetch(url,{credentials:'omit',signal:bingController.signal}).then(r=>{if(!r.ok)throw Error('image HTTP '+r.status);return r.blob()}).then(b=>{if(b.type.startsWith('image/'))return updateCache(url,b)}).catch(()=>{});
+  if(!blob){const started=generation();fetch(url,{credentials:'omit',signal:bingController.signal}).then(r=>{if(!r.ok)throw Error('image HTTP '+r.status);return r.blob()}).then(b=>{if(b.type.startsWith('image/'))return updateCache(url,b,started)}).catch(()=>{});}
   chrome.runtime.sendMessage({type:'ASTRAL_WALLPAPER_SHOWN',url,name}).catch(()=>{});
   return {url,name,blob};
  }
@@ -166,8 +170,9 @@ const AstralWallpaper=(()=>{
     if(await get(url))continue;
     if(!current(token))return;
     if(!pendingCache.has(url)){
+     const started=generation();
      const task=fetch(url,{credentials:'omit',signal:bingController.signal}).then(async response=>{
-      if(response.ok)await updateCache(url,await response.blob());
+      if(response.ok)await updateCache(url,await response.blob(),started);
      }).finally(()=>pendingCache.delete(url));
      pendingCache.set(url,task);
     }

@@ -31,7 +31,7 @@ const AstralSchema=(()=>{
     if(!plain(item))throw Error('导航条目格式错误：'+(i+1)+' / '+(j+1));
     const icon=typeof item.icon==='string'?item.icon:'';
     const obsolete=retiredIconURL(icon)&&item.iconMode!=='custom';
-    return {...item,title:String(item.title??''),url:String(item.url??''),icon:obsolete||item.iconMode==='auto'?'':icon,iconMode:obsolete||!icon?'auto':(item.iconMode==='auto'?'auto':'custom')};
+    return {...item,title:String(item.title??''),url:String(item.url??''),icon:obsolete||item.iconMode==='auto'||!icon.trim()?'':icon,iconMode:obsolete||item.iconMode==='auto'||!icon.trim()?'auto':'custom'};
    })};
   });
   const config={...ASTRAL_DEFAULTS.config,...AstralCompat.config({...ASTRAL_DEFAULTS.config,...(input.config||{})})};

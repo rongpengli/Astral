@@ -18,101 +18,154 @@ const AstralStore=(()=>{
    return u.hostname;
   }catch{return null}
  }
- function probeIcon(url,timeout=4800){
+ const GENERATION='astral.cache.generation';
+ const ICON_CACHE='astral.extension.icons.v2',ICON_TTL=7*86400000;
+ const ICON_FAILURES='astral.extension.icon-failures.v1',FAILURE_TTL=24*3600000;
+ const cacheGeneration=()=>localStorage.getItem(GENERATION)||'0';
+ const iconRecords=()=>{try{return JSON.parse(localStorage.getItem(ICON_CACHE)||'{}')||{}}catch{return {}}};
+ function saveIconRecord(url,icon){
+  const records=iconRecords();delete records[url];records[url]={url:icon,updated:Date.now()};
+  const entries=Object.entries(records).sort((a,b)=>(b[1].updated||0)-(a[1].updated||0)).slice(0,512);
+  try{localStorage.setItem(ICON_CACHE,JSON.stringify(Object.fromEntries(entries)))}catch{}
+ }
+ function dropIconRecord(url){const records=iconRecords();if(url in records){delete records[url];try{localStorage.setItem(ICON_CACHE,JSON.stringify(records))}catch{}}}
+
+ // Persist failed image URLs so a broken URL is not retried on every page load.
+ // Shared failure state for manual icons, site favicons and provider URLs.
+ const iconFailures=()=>{try{return JSON.parse(localStorage.getItem(ICON_FAILURES)||'{}')||{}}catch{return {}}};
+ function failureState(url){
+  const entry=iconFailures()[url];
+  if(typeof entry==='number')return {count:1,until:entry,updated:entry-FAILURE_TTL};
+  return entry&&typeof entry==='object'?entry:{count:0,until:0,updated:0};
+ }
+ function failedRecently(url){return failureState(url).until>Date.now()}
+ function markIconFailure(url,threshold=1){
+  if(!url)return 0;
+  const now=Date.now(),records=iconFailures(),prior=failureState(url);
+  const count=Math.min(threshold,(now-prior.updated>ICON_TTL?0:prior.count)+1);
+  records[url]={count,updated:now,until:count>=threshold?now+FAILURE_TTL:0};
+  const entries=Object.entries(records).filter(([,v])=>v&&now-(typeof v==='number'?v-FAILURE_TTL:v.updated||0)<ICON_TTL).sort((a,b)=>(b[1].updated||b[1])-(a[1].updated||a[1])).slice(0,512);
+  try{localStorage.setItem(ICON_FAILURES,JSON.stringify(Object.fromEntries(entries)))}catch{}
+  return count;
+ }
+ function clearIconFailure(url){const records=iconFailures();if(url in records){delete records[url];try{localStorage.setItem(ICON_FAILURES,JSON.stringify(records))}catch{}}}
+ function probeIcon(url,timeout=4800,generation=cacheGeneration()){
   return new Promise((resolve,reject)=>{
+   if(failedRecently(url)){reject(Error('图标地址处于失败冷却期'));return}
    const image=new Image();let done=false;
-   const finish=(ok)=>{if(done)return;done=true;clearTimeout(timer);image.onload=image.onerror=null;ok?resolve(url):reject(Error('图标加载失败'))};
+   const finish=(ok)=>{if(done)return;done=true;clearTimeout(timer);image.onload=image.onerror=null;if(cacheGeneration()===generation){if(ok)clearIconFailure(url);else markIconFailure(url)}ok?resolve(url):reject(Error('图标加载失败'));};
    const timer=setTimeout(()=>finish(false),timeout);
-   image.onload=()=>finish(image.naturalWidth>0&&image.naturalHeight>0);
+   image.onload=()=>finish(image.naturalWidth>=16&&image.naturalHeight>=16);
    image.onerror=()=>finish(false);
    image.src=url;
   });
  }
- // All extension pages load the same inert HTML icon extractor.
- async function declaredIcon(site){
-  const candidates=await AstralIcons.discover(site.url);
-  for(const url of candidates){try{return await probeIcon(url,1800)}catch{}}
-  return null;
- }
- function discoverIcon(site){
-  const host=publicHost(site.url);
-  if(!host)return Promise.resolve(null);
-  if(!iconLookups.has(host)){
-   const full=encodeURIComponent(site.url);
-   const candidates=[
-    'https://www.google.com/s2/favicons?domain='+encodeURIComponent(host)+'&sz=64',
-    'https://api.xinac.net/icon/?url='+full
-   ];
-   const task=Promise.any(candidates.map(url=>{
-    // Google's missing-icon response can decode as a generic 16px globe.
-    // Reject that fallback rather than caching it as a website icon.
-    if(!url.startsWith('https://www.google.com/s2/'))return probeIcon(url);
-    return new Promise((resolve,reject)=>{
-     const img=new Image();let done=false;
-     const finish=ok=>{if(done)return;done=true;clearTimeout(timer);img.onload=img.onerror=null;ok?resolve(url):reject(Error('Google 默认图标或加载失败'))};
-     const timer=setTimeout(()=>finish(false),4800);
-     img.onload=()=>finish(img.naturalWidth>16&&img.naturalHeight>16);
-     img.onerror=()=>finish(false);img.src=url;
-    });
-   })).catch(()=>null).then(result=>{
-    // A failed lookup is not a permanent negative cache. Retry on the next attempt.
-    if(!result)iconLookups.delete(host);
-    return result;
-   });
-   iconLookups.set(host,task);
-  }
-  return iconLookups.get(host);
- }
- // Discovered icons are generated cache, never user settings or sync edits.
- const ICON_CACHE='astral.extension.icons.v2';
- let iconCache={};try{iconCache=JSON.parse(localStorage.getItem(ICON_CACHE)||'{}')}catch{}
- function saveDiscoveredIcon(site,icon){
-  if(iconCache[site.url]===icon)return;
-  iconCache[site.url]=icon;
-  const keys=Object.keys(iconCache);for(const key of keys.slice(0,Math.max(0,keys.length-512)))delete iconCache[key];
-  try{localStorage.setItem(ICON_CACHE,JSON.stringify(iconCache))}catch{}
- }
  function siteFaviconURL(site){
   try{const u=new URL(site.url);return ['http:','https:'].includes(u.protocol)?u.origin+'/favicon.ico':null}catch{return null}
  }
+ // No cross-origin HTML fetch: test the site's root favicon and both providers concurrently.
+ function discoverIcon(site,generation=cacheGeneration()){
+  const key=site.url;
+  if(!iconLookups.has(key)){
+   const own=siteFaviconURL(site),host=publicHost(site.url),full=encodeURIComponent(site.url);
+   const candidates=[];
+   if(own)candidates.push({url:own,timeout:3000});
+   if(host){
+    candidates.push({url:'https://api.xinac.net/icon/?url='+full,timeout:4800});
+    candidates.push({url:'https://a.favicon.im/'+encodeURIComponent(host)+'?throw-error-on-404=true',timeout:4800});
+   }
+   const available=candidates.filter(item=>!failedRecently(item.url));
+   let task;
+   task=(available.length?Promise.any(available.map(item=>probeIcon(item.url,item.timeout,generation))):Promise.resolve(null))
+    .catch(()=>null)
+    .finally(()=>{if(iconLookups.get(key)===task)iconLookups.delete(key)});
+   iconLookups.set(key,task);
+  }
+  return iconLookups.get(key);
+ }
  const iconResolutions=new Map();
- async function resolveIcon(site){
+ function resolveIcon(site,generation=cacheGeneration()){
   const key=site.url;
   if(!iconResolutions.has(key)){
-   const task=(async()=>{
-    // The site-declared icon and conventional favicon race independently.
-    const own=siteFaviconURL(site);
-    const first=await Promise.any([
-     declaredIcon(site).then(v=>v||Promise.reject(Error('无声明图标'))),
-     own?probeIcon(own,3000):Promise.reject(Error('无 favicon'))
-    ]).catch(()=>null);
-    return first||await discoverIcon(site);
-   })();
-   iconResolutions.set(key,task.then(result=>{
-    // Keep successful lookups for this page, but never cache failure across attempts.
-    // A subsequent visit will always perform discovery again if no icon was found.
-    if(!result)iconResolutions.delete(key);
-    return result;
-   },error=>{iconResolutions.delete(key);throw error}));
+   let task;
+   task=discoverIcon(site,generation).finally(()=>{if(iconResolutions.get(key)===task)iconResolutions.delete(key)});
+   iconResolutions.set(key,task);
   }
   return iconResolutions.get(key);
  }
  function setFavicon(img,site,fallback){
-  const custom=site.iconMode==='custom'&&!!site.icon;
-  const candidate=custom?site.icon:(iconCache[site.url]||site.icon||siteFaviconURL(site)||fallback);
-  let recovering=false;
-  img.onload=()=>{if(!custom&&img.src!==fallback&&!recovering)saveDiscoveredIcon(site,candidate)};
-  img.onerror=async()=>{
-   if(recovering||custom){img.onload=img.onerror=null;if(img.getAttribute('src')!==fallback)img.src=fallback;return}
-   recovering=true;delete iconCache[site.url];
-   const found=await resolveIcon(site).catch(()=>null);
-   if(!img.isConnected)return;
-   img.onload=img.onerror=null;
-   if(found){saveDiscoveredIcon(site,found);img.onerror=()=>{img.onerror=null;img.src=fallback};img.src=found}
-   else img.src=fallback;
-  };
-  img.src=candidate;
-  return candidate;
+  const custom=site.iconMode==='custom'&&typeof site.icon==='string'&&!!site.icon.trim();
+  const manual=custom?site.icon.trim():null;
+  const previous=custom?null:iconRecords()[site.url];
+  // Discard invalid image URLs cached by v1.12.8's old favicon.im endpoint.
+  const saved=previous&&/^https:\/\/favicon\.im\//i.test(previous.url||'')?null:previous;
+  if(previous&&!saved)dropIconRecord(site.url);
+  const started=cacheGeneration();let serial=0,refreshing=false;
+  function display(src,fromDiscovery=false){
+   const token=++serial;
+   img.onerror=()=>{
+    if(token!==serial||cacheGeneration()!==started)return;
+    if(src===manual){
+     const failures=markIconFailure(manual,3);
+     display(fallback);
+     if(failures>=3)refreshFallback();
+     return;
+    }
+    if(src!==fallback){
+     markIconFailure(src);
+     if(saved?.url===src)dropIconRecord(site.url);
+    }
+    display(fallback);
+    if(src!==fallback)refreshFallback();
+   };
+   img.onload=()=>{
+    if(token!==serial||cacheGeneration()!==started)return;
+    if(src===manual){clearIconFailure(manual);saveIconRecord('custom:'+manual,manual)}
+    else {
+     clearIconFailure(src);
+     // Store only an image that the visible navigation element actually loaded.
+     if(fromDiscovery&&!custom&&src!==fallback)saveIconRecord(site.url,src);
+    }
+   };
+   img.src=src;
+  }
+  function refreshFallback(){
+   if(refreshing||cacheGeneration()!==started)return;
+   refreshing=true;
+   resolveIcon(site,started).then(found=>{
+    if(cacheGeneration()!==started)return;
+    if(!found||failedRecently(found))return;
+    // Source-level failure records are the only cooldown gate.
+    if(!custom){
+     // Never overwrite a manual edit made while discovery was running.
+     const latest=(read().sites||[]).some(group=>(group.list||[]).some(entry=>entry.url===site.url&&entry.title===site.title&&entry.iconMode==='custom'&&typeof entry.icon==='string'&&!!entry.icon.trim()));
+     if(latest||cacheGeneration()!==started)return;
+    }
+    // A detached Image probe may succeed while the actual navigation image fails.
+    // Commit cache only after the latter's onload, including refresh of an old URL.
+    if(img.src===found&&img.complete&&img.naturalWidth>=16&&img.naturalHeight>=16){
+     if(!custom)saveIconRecord(site.url,found);
+    }else display(found,true);
+   }).catch(()=>{}).finally(()=>{refreshing=false});
+  }
+  if(custom){
+   // A manual URL is retried after its 24-hour cooldown; restart its 3-failure count.
+   const state=failureState(manual);
+   if(state.count>=3&&state.until<=Date.now())clearIconFailure(manual);
+   if(failedRecently(manual)){display(fallback);refreshFallback()}
+   else display(manual);
+  }else{
+   const cached=saved?.url;
+   if(cached&&!failedRecently(cached)){
+    display(cached);
+    if(Date.now()-(saved.updated||0)>=ICON_TTL)refreshFallback();
+   }else{
+    if(cached)dropIconRecord(site.url);
+    display(fallback);
+    refreshFallback();
+   }
+  }
+  return manual||(saved?.url||fallback);
  }
  // Navigation icons render at 1em (~16 CSS px). Export at 32px for HiDPI.
  // Only the exported snapshot is changed; local settings keep original icons.
@@ -255,7 +308,7 @@ const AstralStore=(()=>{
    await chrome.storage.local.set({__astralBefore1125:raw.__astralBefore1125||{at:Date.now(),config:raw.config||{},sites:raw.sites||[],css:raw.css||{}},__astralExtensionBuild:BUILD});
    for(const key of ['astral.weather.last-success.v1','astral.bing.metadata.v2','astral.wallpaper.current','astral.wallpaper.selection.v1','astral.extension.icons.v2'])localStorage.removeItem(key);
    try{indexedDB.deleteDatabase('astral-wallpaper-v1')}catch{}
-   iconCache={};
+   iconLookups.clear();iconResolutions.clear();
    if(localStorage.getItem('astral.wallpaper.legacy-pin')===null)localStorage.setItem('astral.wallpaper.legacy-pin',AstralCompat.config(raw.config||{}).autoChange===false&&localStorage.getItem('imageSrc')?'1':'0');
   }
   if(!raw.config||!Array.isArray(raw.sites)||!raw.css){
@@ -296,11 +349,37 @@ const AstralStore=(()=>{
   try{if(result.uploadError)await chrome.storage.local.set({__astralImportFailure:{kind:'cloud',message:result.uploadError,at:Date.now()}});else await chrome.storage.local.remove(['__astralImportFailure'])}catch{}
   snapshot=validate(await chrome.storage.local.get(KEYS));return {...read(),importOutcome:{uploaded:!!result.uploaded,uploadError:result.uploadError||null}};
  }
+ // Clear generated data only; preserve the freshly restored preset and sync settings.
+ async function clearRuntimeCaches(){
+  // Invalidate pending writes across tabs before deleting generated data.
+  localStorage.setItem(GENERATION,String(Date.now())+'-'+Math.random());
+  iconLookups.clear();iconResolutions.clear();
+  const failures=[];
+  try{for(const key of Object.keys(localStorage)){
+   if(key.startsWith('astral.weather.')||key.startsWith('astral.bing.')||key.startsWith('astral.wallpaper.')||key===ICON_CACHE||key===ICON_FAILURES)localStorage.removeItem(key);
+  }}catch(e){failures.push('本地缓存：'+e.message)}
+  if('indexedDB' in window)try{
+   const database=await new Promise((resolve,reject)=>{
+    const req=indexedDB.open('astral-wallpaper-v1',1);
+    req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('images'))req.result.createObjectStore('images')};
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+   });
+   try{await new Promise((resolve,reject)=>{
+    const tx=database.transaction('images','readwrite');tx.objectStore('images').clear();
+    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+   })}finally{database.close()}
+  }catch(e){failures.push('壁纸图片：'+e.message)}
+  try{await chrome.storage.local.remove(['__astralDownloadedWallpaper'])}catch(e){failures.push('下载记录：'+e.message)}
+  if('caches' in window)try{
+   for(const name of await caches.keys())if(name.startsWith('astral-'))await caches.delete(name);
+  }catch(e){failures.push('Cache Storage：'+e.message)}
+  if(failures.length)throw Error('部分缓存清理失败：'+failures.join('；'));
+ }
  async function restorePreset(){
   await flush();
   const result=await chrome.runtime.sendMessage({type:'ASTRAL_SYNC_COMMAND',action:'defaults'});
   if(!result?.ok)throw Error(result?.error||'恢复默认失败');
-  localStorage.removeItem('astral.wallpaper.legacy-pin');
+  await clearRuntimeCaches();
   snapshot=validate(await chrome.storage.local.get(KEYS));
   return {...read(),uploadError:result.uploadError};
  }
