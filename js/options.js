@@ -385,11 +385,19 @@ let myNewTabWE = {
 			$id('edit-icon').value = site.icon || '';
             $id('edit-icon').dataset.autoFound = site.iconMode==='auto' ? (site.icon||'') : '';  
 			$id('edit-geticon').textContent = '自动获取';
-			$id('edit-confirm').onclick = () => {
+			$id('edit-confirm').onclick = async () => {
+                const input=$id('edit-icon').value.trim();
+                if(input){
+                 let valid=false;
+                 try{const url=new URL(input);valid=['http:','https:'].includes(url.protocol)||(/^data:image\/(?:png|jpeg|gif|webp|svg\+xml|x-icon|vnd\.microsoft\.icon)[;,]/i.test(input))}catch{}
+                 if(!valid){AstralStore.notify('请输入有效的 HTTP(S) 图片地址或图片 Data URL','图标地址无效');return}
+                 try{await Promise.race([new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>img.naturalWidth?resolve():reject(Error('图片无效'));img.onerror=()=>reject(Error('图片加载失败'));img.src=input}),new Promise((_,reject)=>setTimeout(()=>reject(Error('图片加载超时')),5000))])}
+                 catch(e){AstralStore.notify('图标无法加载：'+e.message,'图标地址无效');return}
+                }
 				myNewTabWE.editing=false;
                 site.title = $id('edit-title').value;
 				site.url = $id('edit-url').value;
-				site.icon = $id('edit-icon').value;
+				site.icon = input;
                 site.iconMode = site.icon && site.icon === $id('edit-icon').dataset.autoFound ? 'auto' : 'custom';
 				$id('edit-modal').style.display = 'none';
 				$id('edit-modal').setAttribute('count', parseInt($id('edit-modal').getAttribute('count')) + 1);

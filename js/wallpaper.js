@@ -28,9 +28,11 @@ const AstralWallpaper=(()=>{
    throw error;
   }
  }
- async function updateCache(key,value){
+ async function updateCache(key,value,started=AstralStore.cacheGeneration()){
+  if(started!==AstralStore.cacheGeneration())return;
   if(key&&(!(value instanceof Blob)||!value.type.startsWith('image/')||!value.size||value.size>MAX_IMAGE_BYTES))return;
   const database=await db();
+  if(started!==AstralStore.cacheGeneration()){database.close();return}
   try{
    await new Promise((resolve,reject)=>{
     const transaction=database.transaction(STORE,'readwrite');
@@ -47,6 +49,7 @@ const AstralWallpaper=(()=>{
       }
       cursor.continue();return;
      }
+     if(started!==AstralStore.cacheGeneration())return;
      const [limit,size]=JSON.parse(localStorage.getItem(POLICY)||cachePolicy(AstralStore.read().config));
      const recent=(cacheRead()?.images||[]).slice(0,limit).map(entry=>urlFor(entry,size));
      const rank=url=>{const index=recent.indexOf(url);return index<0?limit:index};
@@ -68,7 +71,7 @@ const AstralWallpaper=(()=>{
  function normalizeAlternate(data){if(data&&Array.isArray(data.images))return normalize(data);const raw=data&&(data.url||data.image||data.imgurl);if(typeof raw!=='string')throw Error('Invalid alternate response');const u=new URL(raw);if(u.protocol!=='https:'||!/(^|\.)bing\.com$/.test(u.hostname))throw Error('Invalid image host');const id=u.searchParams.get('id');const match=(id||'').match(/^(OHR\.[A-Za-z0-9_-]+?)(?:_(?:UHD|1920x1080|1366x768))?\.jpg$/i);if(!match)throw Error('Invalid image id');return [{urlbase:'/th?id='+match[1],enddate:String(data.enddate||data.date||''),copyright:String(data.copyright||'')}];}
  function cacheRead(){try{const c=JSON.parse(localStorage.getItem(META)||'null');if(c&&Array.isArray(c.images)){const images=c.images.filter(valid);if(images.length)return {updated:Number(c.updated)||0,images}}}catch{}return null}
  function cacheWrite(images){try{localStorage.setItem(META,JSON.stringify({updated:Date.now(),images}))}catch{}}
- async function metadata(count=8,force=false){const n=Math.max(1,Math.min(8,Number(count)||8)),cached=cacheRead();if(!force&&cached&&Date.now()-cached.updated<TTL&&cached.images.length>=n)return cached.images.slice(0,n);
+ async function metadata(count=8,force=false){const started=AstralStore.cacheGeneration();const n=Math.max(1,Math.min(8,Number(count)||8)),cached=cacheRead();if(!force&&cached&&Date.now()-cached.updated<TTL&&cached.images.length>=n)return cached.images.slice(0,n);
   const bing='https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n='+n+'&mkt=zh-CN';
   // The Bing JSON endpoint does not expose CORS. A public CORS proxy is attempted first;
   // direct Bing is a best-effort fallback for environments where it is allowed.
@@ -79,7 +82,7 @@ const AstralWallpaper=(()=>{
    ()=>request('https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n='+n+'&mkt=zh-CN',4000),
    ()=>request('https://bing.lkin.cn/?region=cn',5500)
   ];
-  try{const images=await Promise.any(sources.map(async (source,i)=>{const data=await source();const found=i===4?normalizeAlternate(data):normalize(data);if(found.length<n)throw Error('Bing 返回的历史壁纸数量不足');return found}));cacheWrite(images);return images.slice(0,n)}catch{}
+  try{const images=await Promise.any(sources.map(async (source,i)=>{const data=await source();const found=i===4?normalizeAlternate(data):normalize(data);if(found.length<n)throw Error('Bing 返回的历史壁纸数量不足');return found}));if(started===AstralStore.cacheGeneration())cacheWrite(images);return images.slice(0,n)}catch{}
   // Last known metadata is usable even if stale; never erase it after network failure.
   if(cached)return cached.images.slice(0,n);
   throw Error('无法获取最新 Bing 壁纸：跨域代理或网络不可用');
@@ -115,7 +118,8 @@ const AstralWallpaper=(()=>{
  async function show(entry,size){const url=urlFor(entry,size),name=nameFor(entry);let blob=null;try{blob=await get(url)}catch{}if(blob){const objectUrl=URL.createObjectURL(blob);try{await preload(objectUrl)}catch{blob=null;await preload(url)}finally{URL.revokeObjectURL(objectUrl)}}else{await preload(url)}
   apply(url,blob);try{localStorage.setItem(CURRENT,JSON.stringify({url,name,enddate:entry.enddate||'',size}))}catch{}
   // Fetch for offline caching only after successful display; failures do not hide the wallpaper.
-  if(!blob)fetch(url,{credentials:'omit'}).then(r=>{if(!r.ok)throw Error('image HTTP '+r.status);return r.blob()}).then(b=>{if(b.type.startsWith('image/'))return updateCache(url,b)}).catch(()=>{});
+  const started=AstralStore.cacheGeneration();
+  if(!blob)fetch(url,{credentials:'omit'}).then(r=>{if(!r.ok)throw Error('image HTTP '+r.status);return r.blob()}).then(b=>{if(b.type.startsWith('image/'))return updateCache(url,b,started)}).catch(()=>{});
   return {url,name,blob};
  }
  async function restore(){let saved;try{saved=JSON.parse(localStorage.getItem(CURRENT)||'null')}catch{}if(!saved||typeof saved.url!=='string'||!(/^https:\/\/(?:cn\.|www\.)?bing\.com\/th\?id=OHR\.[A-Za-z0-9_-]+_(?:UHD|1920x1080|1366x768)\.jpg$/.test(saved.url)||(/^https:\/\/(?:bing\.img\.run|api\.dujin\.org)\/bing\/(?:1366x768|1920x1080)\.php$/.test(saved.url))||(/^https:\/\/bing\.img\.run\/(?:1366x768|1920x1080)\.php$/.test(saved.url))))return false;let blob=null;try{blob=await get(saved.url)}catch{}const test=blob?URL.createObjectURL(blob):saved.url;try{await preload(test)}catch{return false}finally{if(blob)URL.revokeObjectURL(test)}apply(saved.url,blob);return true}

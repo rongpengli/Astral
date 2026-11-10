@@ -14,6 +14,7 @@ const AstralWeather=(()=>{
   const key='astral.weather.city.v2:'+Number(latitude).toFixed(3)+','+Number(longitude).toFixed(3);
   try{const cached=JSON.parse(AstralStore.safeGet(key)||'null');if(!force&&cached&&Date.now()-cached.at<(cached.name?86400000:300000))return cached.name}catch{}
   if(cityRequests.has(key))return cityRequests.get(key);
+  const started=AstralStore.cacheGeneration();
   const task=(async()=>{
    const reverse=new URL('https://api.bigdatacloud.net/data/reverse-geocode-client');
    reverse.search=new URLSearchParams({latitude:String(latitude),longitude:String(longitude),localityLanguage:'zh'});
@@ -31,7 +32,12 @@ const AstralWeather=(()=>{
      if(name)break;
     }catch{}finally{clearTimeout(timer)}
    }
-   try{AstralStore.safeSet(key,JSON.stringify({name,at:Date.now()}))}catch{}
+   try{if(started===AstralStore.cacheGeneration()){
+    AstralStore.safeSet(key,JSON.stringify({name,at:Date.now()}));
+    const prefix='astral.weather.city.v2:';
+    const keys=Object.keys(localStorage).filter(k=>k.startsWith(prefix));
+    if(keys.length>32){const ranked=keys.map(k=>{let at=0;try{at=JSON.parse(localStorage.getItem(k)||'null')?.at||0}catch{}return {k,at}}).sort((a,b)=>b.at-a.at);for(const entry of ranked.slice(32))localStorage.removeItem(entry.k)}
+   }}catch{}
    return name;
   })();
   cityRequests.set(key,task);try{return await task}finally{cityRequests.delete(key)}
@@ -42,10 +48,11 @@ const AstralWeather=(()=>{
   const data=await response.json();return (data.results||[]).filter(r=>Number.isFinite(r.latitude)&&Number.isFinite(r.longitude));
  }
  const CACHE_KEY='astral.weather.last-success.v1';
+ const MAX_AGE=24*60*60*1000;
  const STALE_AFTER=3*60*60*1000; // Three hours: visibly label older observations.
  function coords(config){return [Number(config.weatherLatitude),Number(config.weatherLongitude)]}
  function matching(entry,config){const [lat,lon]=coords(config);return entry&&Number.isFinite(lat)&&Number.isFinite(lon)&&Math.abs(entry.latitude-lat)<0.000001&&Math.abs(entry.longitude-lon)<0.000001}
- function readCache(config){try{const item=JSON.parse(AstralStore.safeGet(CACHE_KEY)||'null');if(matching(item,config)&&Number.isFinite(item.savedAt)&&item.weather&&Number.isFinite(item.weather.temperature_2m))return item}catch{}return null}
+ function readCache(config){try{const item=JSON.parse(AstralStore.safeGet(CACHE_KEY)||'null');if(matching(item,config)&&Number.isFinite(item.savedAt)&&item.weather&&Number.isFinite(item.weather.temperature_2m)&&Date.now()-item.savedAt<MAX_AGE)return item}catch{}return null}
  function render(root,entry,config,failed=false){
   root.replaceChildren();root.style.display='block';
   const age=Math.max(0,Date.now()-entry.savedAt),stale=age>=STALE_AFTER;
@@ -69,6 +76,7 @@ const AstralWeather=(()=>{
   return root;
  }
  async function refresh(config){
+  const started=AstralStore.cacheGeneration();
   const serial=++requestSerial;activeController?.abort();
   const host=document.getElementById('weather-container');if(!host)return;
   const root=surface(host);
@@ -84,12 +92,12 @@ const AstralWeather=(()=>{
    const u=new URL('https://api.open-meteo.com/v1/forecast');
    u.search=new URLSearchParams({latitude:String(latitude),longitude:String(longitude),current:'temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m',daily:'temperature_2m_max,temperature_2m_min',forecast_days:'1',timezone:'auto'});
    const response=await fetch(u,{signal:controller.signal});if(!response.ok)throw Error('HTTP '+response.status);
-   const data=await response.json();if(serial!==requestSerial)return;
+   const data=await response.json();if(serial!==requestSerial||started!==AstralStore.cacheGeneration())return;
    const weather=data.current;if(!weather||!Number.isFinite(weather.temperature_2m))throw Error('天气数据无效');
    const entry={latitude,longitude,savedAt:Date.now(),weather:{temperature_2m:weather.temperature_2m,relative_humidity_2m:weather.relative_humidity_2m,weather_code:weather.weather_code,wind_speed_10m:weather.wind_speed_10m,time:weather.time},high:data.daily?.temperature_2m_max?.[0],low:data.daily?.temperature_2m_min?.[0]};
    try{AstralStore.safeSet(CACHE_KEY,JSON.stringify(entry))}catch(e){console.warn('天气缓存保存失败',e)}
    render(root,entry,config);
-  }catch(e){if(serial!==requestSerial)return;if(cached)render(root,cached,config,true);else{root.textContent='天气暂不可用';root.title=String(e)}}
+  }catch(e){if(serial!==requestSerial||started!==AstralStore.cacheGeneration())return;if(cached)render(root,cached,config,true);else{root.textContent='天气暂不可用';root.title=String(e)}}
   finally{clearTimeout(timer);if(activeController===controller)activeController=null}
  }
 
