@@ -96,7 +96,7 @@ const AstralWallpaper=(()=>{
   // Last known metadata is usable even if stale; never erase it after network failure.
   signal.throwIfAborted();
   if(cached)return cached.images.slice(0,n);
-  throw Error('无法获取最新 Bing 壁纸：跨域代理或网络不可用');
+     throw Error('无法获取最新 Bing 壁纸信息，请检查网络连接或稍后再试');
  }
  function urlFor(entry,size){if(!valid(entry))throw Error('Invalid wallpaper');return 'https://www.bing.com'+entry.urlbase.replace(/\.jpg$/i,'')+(['_1366x768.jpg','_1920x1080.jpg','_UHD.jpg'][size]||'_UHD.jpg')}
  function nameFor(entry){const title=String(entry.copyright||'').replace(/\(.*?\)/g,'').trim().replace(/[\\/\*|]/g,'').replace(/:/g,'：').replace(/\?/g,'？').replace(/["<>]/g,"'").replace(/[\x00-\x1f]/g,'').slice(0,140);return (entry.enddate||'bing')+(title?'-'+title:'')+'.jpg'}
