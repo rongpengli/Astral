@@ -7,13 +7,13 @@
 	<title>配置页面</title>
 	<link rel="stylesheet" href="../css/options.css" />
 
-	<link rel="icon" href="../favicon.ico?v=1126icons" sizes="any">
-	<link rel="icon" type="image/png" sizes="16x16" href="../image/astral-16.png?v=1126icons">
-	<link rel="icon" type="image/png" sizes="32x32" href="../image/astral-32.png?v=1126icons">
-	<link rel="icon" type="image/png" sizes="48x48" href="../image/astral-48.png?v=1126icons">
-	<link rel="icon" type="image/png" sizes="192x192" href="../image/astral-192.png?v=1126icons">
-	<link rel="icon" type="image/png" sizes="512x512" href="../image/astral-512.png?v=1126icons">
-	<link rel="apple-touch-icon" sizes="180x180" href="../image/apple-touch-icon.png?v=1126icons">
+	<link rel="icon" href="../favicon.ico" sizes="any">
+	<link rel="icon" type="image/png" sizes="16x16" href="../image/astral-16.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="../image/astral-32.png">
+	<link rel="icon" type="image/png" sizes="48x48" href="../image/astral-48.png">
+	<link rel="icon" type="image/png" sizes="192x192" href="../image/astral-192.png">
+	<link rel="icon" type="image/png" sizes="512x512" href="../image/astral-512.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="../image/apple-touch-icon.png">
 <meta name="color-scheme" content="light dark">
 <style>html,body{background:#eee;color:#222;}@media(prefers-color-scheme:dark){html,body{background:#181a1f;color:#e5e7eb;}}</style>
 </head>
@@ -67,11 +67,26 @@
             </div>
         </div>
     </div>
-	<div id="logo">
-		<a href="https://github.com/rongpengli/Astral" target="_blank">
-			<img src="../image/astral-256.png" width="44" height="44" alt="">  Astral 新标签页
-		</a>
-	</div>
+
+    <div id="customize-modal" role="dialog" aria-modal="true" aria-labelledby="customize-heading" aria-describedby="customize-tips">
+      <div class="group">
+        <div class="header">
+          <span id="customize-heading">定制主页</span>
+          <div class="header-actions customize-actions">
+            <button id="index-browse" type="button">浏览</button>
+            <button id="index-default" type="button">默认</button>
+            <button id="index-save" type="button">保存</button>
+            <button id="customize-close" type="button">关闭</button>
+          </div>
+        </div>
+        <div class="content customize-modal-content">
+          <p id="customize-tips" role="status" aria-live="polite"></p>
+          <pre id="index-css-preview" class="index-css-preview" tabindex="0" hidden></pre>
+          <textarea id="index-css" autocomplete="off" spellcheck="false" placeholder="在此编辑主页 CSS"></textarea>
+        </div>
+      </div>
+    </div>
+	<div id="logo"><span class="logo-title"><img src="../image/astral-256.png" width="44" height="44" alt="">  Astral 新标签页</span></div>
 	<div class="group">
         <div class="header"><span class="header-label">选项</span><span id="save-status" role="status" aria-live="polite"></span>
                 <div class="header-actions"><button id="config-default">恢复默认</button></div>
@@ -120,6 +135,7 @@
                         <button id="import">导入</button>
                         <button id="export">导出</button>
                         <button id="open-customize" type="button">定制页面</button>
+                        <a class="auxiliary-button" href="https://github.com/rongpengli/Astral" target="_blank" rel="noopener noreferrer">开源代码</a><a class="auxiliary-button" href="https://chromewebstore.google.com/detail/astral-new-tab/mldjngfcllpkobkbfjildlaakkpoaadj" target="_blank" rel="noopener noreferrer">Chrome 扩展</a><a class="auxiliary-button" href="https://microsoftedge.microsoft.com/addons/detail/accnhcdomhmcbfddpbmdcdekmlgojeio" target="_blank" rel="noopener noreferrer">Edge 扩展</a>
                     </div></td>
                 </tr>
             </table>
@@ -161,6 +177,7 @@
 <script src="../js/wallpaper.js"></script>
 <script src="../js/weather.js"></script>
 <script src="../js/options.js"></script>
+<script src="../js/customize.js"></script>
 
 </body>
 

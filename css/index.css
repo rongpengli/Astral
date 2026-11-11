@@ -267,3 +267,23 @@ body > header, body > footer, body > #date, body > #navs, body > #weather-contai
 
 #navtable td a {display:inline-flex!important;align-items:center!important;gap:.25em;line-height:1.5;vertical-align:middle;}
 #navtable td a img {display:block;flex:0 0 auto;margin:0!important;vertical-align:middle;}
+
+
+#navtable th .astral-group-title {
+ display:inline-block;
+ max-width:var(--astral-group-title-max-width,5em);
+ overflow:hidden;
+ text-overflow:ellipsis;
+ white-space:nowrap;
+ vertical-align:top;
+}
+#navtable td a .astral-site-title {
+ display:block;
+ flex:0 1 auto;
+ min-width:0;
+ max-width:var(--astral-title-max-width,100px);
+ overflow:hidden;
+ white-space:nowrap;
+ text-overflow:ellipsis;
+}
+#navtable td a {min-width:0;align-items:center!important;}

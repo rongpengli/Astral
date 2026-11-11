@@ -52,7 +52,7 @@ const AstralWeather=(()=>{
  const STALE_AFTER=3*60*60*1000; // Three hours: visibly label older observations.
  function coords(config){return [Number(config.weatherLatitude),Number(config.weatherLongitude)]}
  function matching(entry,config){const [lat,lon]=coords(config);return entry&&Number.isFinite(lat)&&Number.isFinite(lon)&&Math.abs(entry.latitude-lat)<0.000001&&Math.abs(entry.longitude-lon)<0.000001}
- function readCache(config){try{const item=JSON.parse(AstralStore.safeGet(CACHE_KEY)||'null');if(matching(item,config)&&Number.isFinite(item.savedAt)&&item.weather&&Number.isFinite(item.weather.temperature_2m)&&Date.now()-item.savedAt<MAX_AGE)return item}catch{}return null}
+ function readCache(config){try{const item=JSON.parse(AstralStore.safeGet(CACHE_KEY)||'null');if(matching(item,config)&&Number.isFinite(item.savedAt)&&item.weather&&Number.isFinite(item.weather.temperature_2m)&&Date.now()-item.savedAt<MAX_AGE&&item.savedAt<=Date.now())return item}catch{}return null}
  function render(root,entry,config,failed=false){
   root.replaceChildren();root.style.display='block';
   const age=Math.max(0,Date.now()-entry.savedAt),stale=age>=STALE_AFTER;

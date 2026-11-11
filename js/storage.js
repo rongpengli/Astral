@@ -12,8 +12,8 @@ const AstralStore=(()=>{
  const BUILD='1.12.8', INITIALIZED_BUILD='astral.web.initialized-build';
  const CACHE_GENERATION='astral.cache.generation';
  const ICON_CACHE='astral.web.icons',ICON_TTL=7*86400000;
- const ICON_FAILURES='astral.web.icon-failures',FAILURE_TTL=24*3600000;
- // Shared per-page lookup de-duplication for automatic icon discovery.
+ const ICON_FAILURES='astral.web.icon-failures',FAILURE_TTL=20*60000;
+
  const iconLookups=new Map();
  // Normalize retired provider URLs left by older configuration exports.
  function retiredIconURL(value){
@@ -39,13 +39,13 @@ const AstralStore=(()=>{
  function dropIconRecord(url){const records=iconRecords();if(url in records){delete records[url];try{localStorage.setItem(ICON_CACHE,JSON.stringify(records))}catch{}}}
 
  // Persist failed image URLs so a broken URL is not retried on every page load.
- // Shared failure state for manual icons, site favicons and provider URLs.
+
  const iconFailures=()=>{try{return JSON.parse(localStorage.getItem(ICON_FAILURES)||'{}')||{}}catch{return {}}};
  function failureState(url){
   const entry=iconFailures()[url];
   return entry&&typeof entry==='object'?entry:{count:0,until:0,updated:0};
  }
- function failedRecently(url){return failureState(url).until>Date.now()}
+ function failedRecently(url){const state=failureState(url);return state.until>Date.now()&&Date.now()-state.updated<FAILURE_TTL}
  function markIconFailure(url,threshold=1){
   if(!url)return 0;
   const now=Date.now(),records=iconFailures(),prior=failureState(url);
@@ -91,7 +91,7 @@ const AstralStore=(()=>{
   task=Promise.resolve().then(()=>{
    if(cacheGeneration()!==generation)throw Error('图标任务已失效');
    const state=failureState(url);
-   // A completed 24-hour cooldown starts a fresh three-attempt cycle.
+   // Allow manual icons to be retried after the cooldown.
    if(state.count>=3&&state.until<=Date.now())clearIconFailure(url);
    return probeIcon(url,MANUAL_ICON_TIMEOUT,generation,1,3);
   }).finally(()=>{
@@ -105,18 +105,27 @@ const AstralStore=(()=>{
  }
  // No cross-origin HTML fetch: test the site's root favicon and both providers concurrently.
  function discoverIcon(site,generation=cacheGeneration()){
-  const key=site.url;
+  let origin;
+  try{origin=new URL(site.url).origin}catch{origin=site.url}
+  const key=origin;
   if(!iconLookups.has(key)){
    const own=siteFaviconURL(site),host=publicHost(site.url),full=encodeURIComponent(site.url);
    const candidates=[];
-   if(own)candidates.push({url:own,timeout:3000});
-   if(host){
-    candidates.push({url:'https://api.xinac.net/icon/?url='+full,timeout:4800});
-    candidates.push({url:'https://a.favicon.im/'+encodeURIComponent(host)+'?throw-error-on-404=true',timeout:4800});
+   if(own){
+    candidates.push({url:own,timeout:4200});
+    candidates.push({url:origin+'/favicon.svg',timeout:4200});
+    candidates.push({url:origin+'/apple-touch-icon.png',timeout:4200});
    }
-   const available=candidates.filter(item=>!failedRecently(item.url));
+   if(host){
+    candidates.push({url:'https://www.google.com/s2/favicons?domain='+encodeURIComponent(host)+'&sz=64',timeout:5200});
+    candidates.push({url:'https://api.xinac.net/icon/?url='+full,timeout:5200});
+    candidates.push({url:'https://a.favicon.im/'+encodeURIComponent(host)+'?throw-error-on-404=true',timeout:5200});
+   }
+   const direct=candidates.filter(item=>item.url.startsWith(origin+'/')&&!failedRecently(item.url));
+   const providers=candidates.filter(item=>!item.url.startsWith(origin+'/')&&!failedRecently(item.url));
    let task;
-   task=(available.length?Promise.any(available.map(item=>probeIcon(item.url,item.timeout,generation))):Promise.resolve(null))
+    task=Promise.any(direct.map(item=>probeIcon(item.url,item.timeout,generation,1)))
+    .catch(()=>Promise.any(providers.map(item=>probeIcon(item.url,item.timeout,generation,1))))
     .catch(()=>null)
     .finally(()=>{if(iconLookups.get(key)===task)iconLookups.delete(key)});
    iconLookups.set(key,task);
@@ -197,7 +206,7 @@ const AstralStore=(()=>{
    }).catch(()=>{}).finally(()=>{refreshing=false});
   }
   if(custom){
-   // Show a local placeholder while the shared off-screen probe is pending.
+
    display(fallback);
    if(failedRecently(manual))refreshFallback();
    else loadManualIcon(manual,started).then(()=>{
@@ -238,7 +247,7 @@ const AstralStore=(()=>{
    });
   }finally{clearTimeout(timer)}
  }
- // Navigation icons render at 1em (~16 CSS px). Export at 32px for HiDPI.
+
  // Only the exported snapshot is changed; local settings keep original icons.
  async function compactIcon(source){
   const img=new Image();let objectURL=null;
@@ -287,8 +296,8 @@ const AstralStore=(()=>{
     left=x0*sw/scan.width;top=y0*sh/scan.height;
     cropW=(x1-x0)*sw/scan.width;cropH=(y1-y0)*sh/scan.height;
    }
-   // 1em is typically 16 CSS pixels; 32 physical pixels support 2x screens.
-   // Keep a square transparent canvas, matching the extension's icon box.
+
+
    const canvas=document.createElement('canvas');canvas.width=32;canvas.height=32;
    const ctx=canvas.getContext('2d');if(!ctx)throw Error('无法创建画布');
    const scale=Math.min(32/cropW,32/cropH);
@@ -550,7 +559,7 @@ const AstralStore=(()=>{
  }
  function write(data){const merged=validate({...read(),...data});safeSet(KEY,JSON.stringify(merged));return merged}
  function replace(data){const normalized=validate(data);safeSet(KEY,JSON.stringify(normalized));return normalized}
- function notify(message,title='提示'){let box=document.getElementById('astral-toast');if(!box){box=document.createElement('div');box.id='astral-toast';Object.assign(box.style,{position:'fixed',bottom:'24px',left:'50%',transform:'translateX(-50%)',padding:'10px 18px',background:'var(--toast-bg,#20252ddd)',color:'var(--toast-text,white)',borderRadius:'8px',zIndex:'99999',maxWidth:'80vw',font:'14px sans-serif'});document.body.append(box)}box.textContent=title+'：'+String(message);box.hidden=false;clearTimeout(notify.timer);notify.timer=setTimeout(()=>box.hidden=true,4500)}
+ function notify(message,title='提示'){let box=document.getElementById('astral-toast');if(!box){box=document.createElement('div');box.id='astral-toast';Object.assign(box.style,{position:'fixed',bottom:'24px',left:'50%',transform:'translateX(-50%)',padding:'10px 18px',background:'var(--toast-bg,#20252ddd)',color:'var(--toast-text,white)',borderRadius:'8px',zIndex:'99999',maxWidth:'80vw',font:'14px sans-serif'});document.body.append(box)}box.textContent=(message==null||String(message)==='')?String(title||'提示'):(title?String(title)+'：':'')+String(message);box.hidden=false;clearTimeout(notify.timer);notify.timer=setTimeout(()=>box.hidden=true,4500)}
  function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.style.display='none';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
  return {read,write,replace,validate,safeGet,safeSet,initializeFromFile,restorePreset,clearRuntimeCaches,cacheGeneration,notify,download,favicon,setFavicon,discoverIcon,resolveIcon,exportSitesWithIcons,defaults:ASTRAL_DEFAULTS};
 })();
