@@ -22,7 +22,7 @@ let myNewTabWE = {
  initImportExport: () => {
   $id('import').addEventListener('click',()=>{if($id('import').disabled)return;upload.value='';upload.accept='.json,application/json';upload.onchange=async()=>{if(!upload.files?.[0])return;$id('import').disabled=true;try{
     const json=JSON.parse(await upload.files[0].text());
-    // Validate before asking for geolocation, then resolve coordinates on the importing device.
+
     const data=AstralStore.validate(json);
     myNewTabWE.cancelLocation?.();
     let locationWarning='';
@@ -33,7 +33,7 @@ let myNewTabWE = {
         data.config.weatherLatitude=pos.coords.latitude;data.config.weatherLongitude=pos.coords.longitude;
         data.config.weatherCity=await AstralWeather.resolveCity(pos.coords.latitude,pos.coords.longitude)||AstralWeather.coordinateLabel(pos.coords.latitude,pos.coords.longitude);
       }catch(e){
-        // Do not retain possibly stale coordinates from another device when permission is denied.
+
         data.config.weatherLatitude=30.2741;
         data.config.weatherLongitude=120.1551;
         data.config.weatherCity='杭州';
@@ -41,8 +41,8 @@ let myNewTabWE = {
       }
     }
     const imported=await AstralStore.importData(data);for(const id of ['weather-city','weather-lat','weather-lon'])delete $id(id).dataset.dirty;myNewTabWE.config=imported.config;myNewTabWE.sites=imported.sites;myNewTabWE.initConf();myNewTabWE.renderSites();dispatchEvent(new StorageEvent('storage',{key:'astral.web.settings'}));
-    const syncNotice=imported.importOutcome?.uploadError?'；已保存本机，但云端上传失败：'+imported.importOutcome.uploadError:imported.importOutcome?.uploaded?'；已同步到云端':'；已保存本机（同步未开启）';
-    AstralStore.notify('已导入 '+imported.sites.length+' 个分组，'+imported.sites.reduce((n,g)=>n+g.list.length,0)+' 个网址'+locationWarning+syncNotice,'导入成功');
+    const syncNotice=imported.importOutcome?.uploadError?'；已保存本机，云同步失败：'+imported.importOutcome.uploadError:imported.importOutcome?.uploaded?'；已同步':'；仅保存本机';
+    AstralStore.notify(imported.sites.length+' 组、'+imported.sites.reduce((n,g)=>n+g.list.length,0)+' 个网址'+locationWarning+syncNotice,'配置已导入');
    }catch(e){try{await chrome.storage.local.set({__astralImportFailure:{kind:'local',message:e.message||String(e),at:Date.now()}})}catch{}const meta=(await chrome.storage.local.get('__astralSync')).__astralSync;myNewTabWE.notify(e.message+(meta?.importBlocked?'；同步已暂停，请重试导入或手动开启同步':''),'导入配置失败')}finally{$id('import').disabled=false}};upload.click()});
   $id('export').addEventListener('click',async()=>{
    const button=$id('export');
@@ -50,15 +50,13 @@ let myNewTabWE = {
    button.disabled=true;
    try{
     await AstralStore.flush();const data=AstralStore.read();
-    // Export the stored location mode and coordinates as-is; never request permission on export.
-    // Resolve missing icons only for the exported snapshot. Import and stored
-    // configurations retain the existing lazy /favicon.ico fallback behavior.
+
     const {sites}=await AstralStore.exportSitesWithIcons(data.sites);
     const meta=(await chrome.storage.local.get('__astralSync')).__astralSync;
     const syncEnabled=meta ? !!meta.enabled && !meta.userDisabled && !meta.importBlocked : true;
     const config={...AstralCompat.portable(data.config),syncEnabled};
     AstralStore.download(new Blob([JSON.stringify({config,sites,css:data.css},null,2)+'\n'],{type:'application/json'}),'AstralNewTab.json');
-    AstralStore.notify('已导出配置：自动发现的图标不嵌入，自定义图标按需压缩备份','导出成功');
+    AstralStore.notify('', '配置已导出');
    }catch(e){myNewTabWE.notify(e.message||String(e),'导出配置失败')}
    finally{button.disabled=false}
   });
@@ -70,6 +68,7 @@ let myNewTabWE = {
 		$id('wallpaper-resolution').value = String(myNewTabWE.config.useBigImage);
 		$id('bing-max-history').value = String(myNewTabWE.config.bingMaxHistory);
 		$id('title').value = myNewTabWE.config.title;
+        $id('bookmark-max-rows').value = String(myNewTabWE.config.bookmarkImportMaxRows ?? 12);
   if(!$id('weather-city').dataset.dirty)$id('weather-city').value=myNewTabWE.config.weatherCity;
   if(!$id('weather-lat').dataset.dirty)$id('weather-lat').value=myNewTabWE.config.weatherLatitude;
   if(!$id('weather-lon').dataset.dirty)$id('weather-lon').value=myNewTabWE.config.weatherLongitude;
@@ -81,16 +80,80 @@ let myNewTabWE = {
 
 	renderSites: () => {
         const container=$id('sites');
-        // The template must not be deleted when rebuilding after an import.
+
         container.querySelectorAll('[data-astral-group]').forEach(el=>el.remove());
         for (const group of myNewTabWE.sites) {
             const node=myNewTabWE.buildGroup(group);
             node.dataset.astralGroup='1';
             container.appendChild(node);
+            myNewTabWE.setupTitleResize(node);
         }
+    },
+    setupTitleResize: node => {
+        const heading=node.querySelector('.navigation-heading .row-title');
+        const info=node.querySelector('.navigation-heading .site-info');
+        const key='astral.options.navigationTitleWidth';
+        const stored=(()=>{try{return Number(localStorage.getItem(key))}catch{return 0}})();
+        const initial=stored>=56&&stored<=640?stored:112;
+        const apply=width=>{
+            document.querySelectorAll('#sites .group-table').forEach(table=>{
+                table.style.setProperty('--astral-title-width',width+'px');
+            });
+        };
+        apply(initial);
+        const grip=document.createElement('span');
+        grip.className='astral-column-resizer';
+        grip.title='拖动调整标题宽度，双击恢复默认';
+        grip.setAttribute('role','separator');
+        grip.setAttribute('aria-label','调整标题列宽');
+        grip.setAttribute('aria-orientation','vertical');
+        grip.tabIndex=0;
+        heading.appendChild(grip);
+        const maxWidth=()=>Math.max(56,info.getBoundingClientRect().width-210);
+        const resize=value=>{
+            const width=Math.round(Math.max(56,Math.min(maxWidth(),value)));
+            apply(width);
+            return width;
+        };
+        const save=width=>{try{localStorage.setItem(key,String(width))}catch{}};
+        grip.addEventListener('pointerdown',event=>{
+            if(event.button!==0)return;
+            event.preventDefault();
+            event.stopPropagation();
+            const startX=event.clientX;
+            const startWidth=heading.getBoundingClientRect().width;
+            grip.setPointerCapture(event.pointerId);
+            document.body.classList.add('astral-column-resizing');
+            let width=startWidth;
+            const move=e=>{width=resize(startWidth+e.clientX-startX)};
+            const stop=()=>{
+                grip.removeEventListener('pointermove',move);
+                grip.removeEventListener('pointerup',stop);
+                grip.removeEventListener('pointercancel',stop);
+                document.body.classList.remove('astral-column-resizing');
+                save(width);
+            };
+            grip.addEventListener('pointermove',move);
+            grip.addEventListener('pointerup',stop);
+            grip.addEventListener('pointercancel',stop);
+        });
+        grip.addEventListener('dblclick',event=>{
+            event.preventDefault();
+            event.stopPropagation();
+            apply(112);
+            try{localStorage.removeItem(key)}catch{}
+        });
+        grip.addEventListener('keydown',event=>{
+            if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return;
+            event.preventDefault();
+            const width=resize(heading.getBoundingClientRect().width+(event.key==='ArrowRight'?16:-16));
+            save(width);
+        });
     },
 	initSites: () => {
         myNewTabWE.renderSites();
+        AstralBookmarkImport.init();
+        AstralNavigationDrag.init();
         $id('new-group').addEventListener('click',async()=>{
             const name=await myNewTabWE.editGroup('',true);if(name===null)return;
             myNewTabWE.sites=AstralStore.read().sites;
@@ -105,7 +168,7 @@ let myNewTabWE = {
             upload.value='';upload.accept='image/png,image/jpeg,image/webp,image/gif';
             upload.onchange=async()=>{
                 const file=upload.files?.[0];if(!file)return;
-                if(!file.type.startsWith('image/')||file.size>5*1024*1024){myNewTabWE.notify('仅支持 5 MB 以下的图片','图标上传');return}
+                if(!file.type.startsWith('image/')||file.size>5*1024*1024){myNewTabWE.notify('', '图标须小于 5 MB');return}
                 try{
                     const source=URL.createObjectURL(file);
                     try{
@@ -128,8 +191,8 @@ let myNewTabWE = {
     const original=$id('edit-url').value,modalCount=$id('edit-modal').getAttribute('count');
     const found=await AstralStore.resolveIcon({url:original});
     if($id('edit-url').value!==original||$id('edit-modal').getAttribute('count')!==modalCount)return;
-    if(found){$id('edit-icon').value=found;$id('edit-icon').dataset.autoFound=found;myNewTabWE.notify('已获取并填写图标地址','网站图标')}
-    else myNewTabWE.notify('图标服务未返回可用图片，可手动上传','网站图标');
+    if(found){$id('edit-icon').value=found;$id('edit-icon').dataset.autoFound=found;myNewTabWE.notify('', '图标已获取')}
+    else myNewTabWE.notify('', '未获取到图标，可手动上传');
    }
    catch(e){myNewTabWE.notify(e.message,'网址无效')}
   });
@@ -137,7 +200,7 @@ let myNewTabWE = {
 
 	init: () => {
 		myNewTabWE.initImportExport();
-        $id('open-customize').addEventListener('click',()=>window.open('./customize.html','_blank','noopener'));
+        
 		myNewTabWE.initConf();
 		myNewTabWE.confListener();
         $id('settings-fields').disabled=false;
@@ -174,11 +237,21 @@ let myNewTabWE = {
             AstralWallpaper.configure(myNewTabWE.config).catch(console.warn);
             dispatchEvent(new Event('astral-history-changed'));
 		});
+        $id('bookmark-max-rows').addEventListener('change',e=>{
+            const value=Number(e.target.value);
+            if(!Number.isInteger(value)||value<1||value>999){
+                e.target.value=String(AstralStore.read().config.bookmarkImportMaxRows ?? 12);
+                myNewTabWE.notify('请输入 1～999 的整数','设置无效');
+                return;
+            }
+            myNewTabWE.config.bookmarkImportMaxRows=value;
+            if(myNewTabWE.setStorage(true))AstralBookmarkImport.refresh();
+        });
 		$id('title').addEventListener('change', e => {
 			myNewTabWE.config.title = e.target.value;
 			if(!myNewTabWE.setStorage(true))return;
 		});
-  // Location is explicitly opt-in. Keep manual coordinates as a fallback.
+
   const city=$id('weather-city'),lat=$id('weather-lat'),lon=$id('weather-lon');
   const choices=$id('weather-candidates'),status=$id('location-status');
   const clearDraft=()=>{for(const el of [city,lat,lon])delete el.dataset.dirty};
@@ -199,7 +272,7 @@ let myNewTabWE = {
       const cityName=resolved||AstralWeather.coordinateLabel(latitude,longitude);
       if(commit({weatherMode:'native',weatherLocationMode:'auto',weatherLatitude:latitude,weatherLongitude:longitude,weatherCity:cityName}))status.textContent=resolved?'定位成功：'+cityName:'已定位到 '+cityName+'，城市名称查询暂不可用，可重新定位重试';
       $id('location-refresh').disabled=false;
-    },error=>{if(request!==locationRequest)return;status.textContent='定位失败：'+error.message+'；仍使用已保存坐标';$id('location-refresh').disabled=false;if(myNewTabWE.config.weatherLocationMode!=='auto')myNewTabWE.initConf()},
+    },error=>{if(request!==locationRequest)return;status.textContent='定位失败，继续使用已保存位置';$id('location-refresh').disabled=false;if(myNewTabWE.config.weatherLocationMode!=='auto')myNewTabWE.initConf()},
     {enableHighAccuracy:false,timeout:10000,maximumAge:1800000});
   };
   $id('location-auto').addEventListener('change',e=>{if(e.target.checked){$id('weather-manual-fields').hidden=true;$id('location-refresh').hidden=false;locate()}});
@@ -208,8 +281,8 @@ let myNewTabWE = {
   const saveCoords=()=>{
     ++locationRequest;++cityRequest;clearTimeout(cityTimer);cityController?.abort();
     const latitude=Number(lat.value),longitude=Number(lon.value);
-    if(!lat.value.trim()||!lon.value.trim()||!Number.isFinite(latitude)||Math.abs(latitude)>90||!Number.isFinite(longitude)||Math.abs(longitude)>180){myNewTabWE.notify('请输入有效的经纬度','天气设置');return}
-    if(commit({weatherMode:'native',weatherLocationMode:'manual',weatherCity:city.value.trim()||'自定义坐标',weatherLatitude:latitude,weatherLongitude:longitude}))AstralStore.notify('经纬度已保存','天气设置');
+    if(!lat.value.trim()||!lon.value.trim()||!Number.isFinite(latitude)||Math.abs(latitude)>90||!Number.isFinite(longitude)||Math.abs(longitude)>180){myNewTabWE.notify('', '请输入有效的经纬度');return}
+    if(commit({weatherMode:'native',weatherLocationMode:'manual',weatherCity:city.value.trim()||'自定义坐标',weatherLatitude:latitude,weatherLongitude:longitude}))AstralStore.notify('', '位置已保存');
   };
   lat.addEventListener('change',saveCoords);lon.addEventListener('change',saveCoords);
   let cityRequest=0,cityTimer=null,cityController=null;
@@ -274,7 +347,12 @@ let myNewTabWE = {
 		let table = node.querySelector('.group-table'),
 			row = node.querySelector('.template-row');
 
-		node.querySelector('.group-name').textContent = group.name;
+
+		node.dataset.dragGroup=group._syncId;
+        const groupHeader=node.querySelector('.group-name');
+        groupHeader.textContent=group.name;
+        const groupHandle=document.createElement('button');groupHandle.type='button';groupHandle.className='astral-drag-handle';groupHandle.draggable=true;groupHandle.textContent='⠿';groupHandle.title='拖动调整分组顺序';groupHandle.setAttribute('aria-label','拖动分组 '+group.name);
+        groupHeader.before(groupHandle);
 		node.querySelector('.group-up').addEventListener('click', () => {
 			let index = myNewTabWE.sites.indexOf(group);
 			if (index) {   //不是第一个
@@ -304,7 +382,7 @@ let myNewTabWE = {
                 if(!ok)return;
                 const latest=AstralStore.read().sites;
                 const target=latest.find(g=>group._syncId?g._syncId===group._syncId:g.name===group.name);
-                if(!target){myNewTabWE.notify('分组已被其他页面删除，请重新添加');return}
+                if(!target){myNewTabWE.notify('', '分组已变化，请刷新重试');return}
                 target.list.push(site);myNewTabWE.sites=latest;if(myNewTabWE.setStorage())myNewTabWE.renderSites();
             });
 		});
@@ -313,7 +391,7 @@ let myNewTabWE = {
             const name=await myNewTabWE.editGroup(group.name);if(name===null)return;
             const latest=AstralStore.read().sites;
             const target=latest.find(g=>identity.id?g._syncId===identity.id:g.name===identity.name);
-            if(!target){myNewTabWE.sites=latest;myNewTabWE.renderSites();myNewTabWE.notify('该分组已被其他页面删除','编辑未保存');return}
+            if(!target){myNewTabWE.sites=latest;myNewTabWE.renderSites();myNewTabWE.notify('', '分组已删除，请刷新重试');return}
             target.name=name;myNewTabWE.sites=latest;if(myNewTabWE.setStorage())myNewTabWE.renderSites();
         });
 		node.querySelector('.group-delete').addEventListener('click', () => {
@@ -333,6 +411,9 @@ let myNewTabWE = {
 			img = node.querySelector('.row-icon img'),
 			url = node.querySelector('.row-url');
 		title.textContent = title.title = site.title;
+        node.dataset.dragItem=site._syncId;
+        const handle=document.createElement('button');handle.type='button';handle.className='astral-drag-handle astral-site-handle';handle.draggable=true;handle.textContent='⠿';handle.title='拖动排序或移动到其他分组';handle.setAttribute('aria-label','拖动网址 '+site.title);
+        title.before(handle);
 		img.title = AstralStore.setFavicon(img,site,'../image/default.svg');
 		url.textContent = url.title = site.url;
 		node.querySelector('.row-up').addEventListener('click', () => {
@@ -357,7 +438,7 @@ let myNewTabWE = {
                 if(!ok)return;
                 const latest=AstralStore.read().sites;
                 const target=latest.flatMap(g=>g.list).find(s=>identity.id?s._syncId===identity.id:s.url===identity.url&&s.title===identity.title);
-                if(!target){myNewTabWE.sites=latest;myNewTabWE.renderSites();myNewTabWE.notify('该网址已被其他页面删除，请重新添加','编辑未保存');return}
+                if(!target){myNewTabWE.sites=latest;myNewTabWE.renderSites();myNewTabWE.notify('', '网址已变化，请刷新重试');return}
                 Object.assign(target,{title:site.title,url:site.url,icon:site.icon,iconMode:site.iconMode});
                 myNewTabWE.sites=latest;if(!myNewTabWE.setStorage())return;myNewTabWE.renderSites();
             });
@@ -409,7 +490,7 @@ let myNewTabWE = {
                         img.src=icon;
                         await Promise.race([img.decode(),new Promise((_,reject)=>setTimeout(()=>reject(Error('图片加载超时')),8000))]);
                         if(!img.naturalWidth)throw Error('无法解码图片');
-                    }catch(e){myNewTabWE.notify('图标无法加载：'+e.message,'图标验证失败');return}
+                    }catch(e){myNewTabWE.notify('','图标无法加载');return}
                     finally{button.disabled=false}
                 }
 				myNewTabWE.editing=false;

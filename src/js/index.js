@@ -9,26 +9,36 @@ const $id=id=>document.getElementById(id);
 const myNewTabWE={config:{},sites:[],css:{},busy:false,
  initCss(){let style=$id('astral-index-custom');if(!style){style=document.createElement('style');style.id='astral-index-custom';document.head.append(style)}style.textContent=this.css.index||'';if(this.renderedSites)requestAnimationFrame(()=>this.updateNavItemWidth())},
  initDate(){let d=Solar.getSolar(new Date());$id('solar-date').textContent=d.date;$id('solar-festival').textContent=d.festival;$id('solar-holiday').textContent=d.holiday;d=Lunar.getLunar(new Date());$id('lunar-date').textContent=d.date;$id('lunar-festival').textContent=d.festival;$id('lunar-holiday').textContent=d.holiday},
- buildTr(group){const tr=document.createElement('tr'),th=document.createElement('th');th.textContent=group.name;tr.append(th);for(const site of group.list){const td=document.createElement('td'),a=document.createElement('a'),img=document.createElement('img');if(!/^https?:\/\//i.test(site.url)&&!/^mailto:/i.test(site.url))continue;a.href=site.url;if(this.config.newTabOpen){a.target='_blank';a.rel='noopener noreferrer'}AstralStore.setFavicon(img,site,'../image/default.svg');a.append(img,document.createTextNode(site.title));td.append(a);tr.append(td)}return tr},
- // Aim for six items per row on desktop. Preserve the original 1080px
- // baseline, and expand only when six measured cells need more room.
+ buildTr(group){const tr=document.createElement('tr'),th=document.createElement('th'),heading=document.createElement('span');heading.className='astral-group-title';heading.textContent=group.name;heading.title=group.name;heading.setAttribute('aria-label',group.name);th.title=group.name;th.append(heading);tr.append(th);for(const site of group.list){const td=document.createElement('td'),a=document.createElement('a'),img=document.createElement('img');if(!/^https?:\/\//i.test(site.url)&&!/^mailto:/i.test(site.url))continue;a.href=site.url;if(this.config.newTabOpen){a.target='_blank';a.rel='noopener noreferrer'}AstralStore.setFavicon(img,site,'../image/default.svg');const label=document.createElement('span');label.className='astral-site-title';label.textContent=site.title;a.title=site.title;a.append(img,label);td.append(a);tr.append(td)}return tr},
+
+
  updateNavItemWidth(){
   const table=$id('navtable'),panel=$id('navs');if(!table||!panel)return;
   const stacked=matchMedia('(max-width: 900px)').matches;
   const cells=[...table.querySelectorAll('td')];if(!cells.length)return;
-  // Measure text alone. Never measure the allocated grid cell or a constrained link:
-  // their bounding boxes can be hundreds of pixels wider than the content.
+
+
   const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
   let required=0;
   for(const cell of cells){
    const link=cell.querySelector('a');if(!link)continue;
    const style=getComputedStyle(link),cellStyle=getComputedStyle(cell);
    ctx.font=style.font;
-   const text=[...link.childNodes].filter(n=>n.nodeType===Node.TEXT_NODE).map(n=>n.textContent).join('');
+   const title=link.querySelector('.astral-site-title');const text=title?.textContent||'';
+   const maxTextWidth=ctx.measureText('OpenReview').width;
+   if(title)title.style.setProperty('--astral-title-max-width',maxTextWidth+'px');
    const icon=link.querySelector('img'),iconStyle=icon?getComputedStyle(icon):null;
    const iconWidth=icon?(parseFloat(iconStyle.width)||parseFloat(style.fontSize)||16)+(parseFloat(iconStyle.marginRight)||0)+(parseFloat(style.columnGap)||0):0;
    const padding=(parseFloat(cellStyle.paddingLeft)||0)+(parseFloat(cellStyle.paddingRight)||0);
-   required=Math.max(required,Math.ceil(ctx.measureText(text).width+iconWidth+padding+8));
+   required=Math.max(required,Math.ceil(Math.min(ctx.measureText(text).width,maxTextWidth)+iconWidth+padding+8));
+  }
+
+  for(const title of table.querySelectorAll('th .astral-group-title')){
+   const headingCell=title.closest('th');
+   const headingStyle=getComputedStyle(headingCell);
+   ctx.font=headingStyle.font;
+   const maxGroupWidth=ctx.measureText('中'.repeat(5)).width;
+   title.style.setProperty('--astral-group-title-max-width',Math.ceil(maxGroupWidth)+'px');
   }
   const headingCell=table.querySelector('th');
   const heading=stacked?0:Math.max(115,Math.ceil(headingCell?headingCell.scrollWidth:0));
@@ -36,9 +46,7 @@ const myNewTabWE={config:{},sites:[],css:{},busy:false,
   const tablePadding=(parseFloat(tableStyle.paddingLeft)||0)+(parseFloat(tableStyle.paddingRight)||0);
   const cap=Math.max(1,Math.min(innerWidth-20,Math.floor(innerWidth*.94)));
   const overhead=heading+tablePadding+4;
-  // First decide how many columns fit in the viewport. Then size the panel
-  // for those columns, instead of stretching four columns across a six-column panel.
-  // Keep the original 1080px visual baseline only when all six columns fit.
+
   const columns=Math.max(1,Math.min(6,Math.floor((cap-overhead+1)/Math.max(required,1))));
   const needed=Math.ceil(overhead+columns*required);
   const panelWidth=columns===6&&!stacked
@@ -66,12 +74,12 @@ const myNewTabWE={config:{},sites:[],css:{},busy:false,
    catch(error){
     if(AstralWallpaper.current(token)){
      AstralWallpaper.showGradient(token);
-     AstralStore.notify(error.message,'自定义壁纸加载失败');
+     AstralStore.notify('', '自定义壁纸加载失败');
     }
    }
    return;
   }
-  if(!extras.autoChange&&AstralStore.safeGet('astral.wallpaper.legacy-pin')==='1'&&AstralStore.safeGet('imageSrc')){try{await AstralWallpaper.showCustom(AstralStore.safeGet('imageSrc'),AstralStore.safeGet('imageName')||'bing-pinned.jpg',token)}catch(e){if(AstralWallpaper.current(token))AstralStore.notify(e.message,'旧壁纸加载失败')}return}
+  if(!extras.autoChange&&AstralStore.safeGet('astral.wallpaper.legacy-pin')==='1'&&AstralStore.safeGet('imageSrc')){try{await AstralWallpaper.showCustom(AstralStore.safeGet('imageSrc'),AstralStore.safeGet('imageName')||'bing-pinned.jpg',token)}catch(e){if(AstralWallpaper.current(token))AstralStore.notify('', '壁纸加载失败')}return}
   const restored=await AstralWallpaper.restore(token,!extras.autoChange).catch(()=>false);
   if(!AstralWallpaper.current(token))return;
   if(extras.autoChange||!restored)await this.refreshWallpaper(!restored);
@@ -99,7 +107,7 @@ const myNewTabWE={config:{},sites:[],css:{},busy:false,
   }catch(e){
    if(!AstralWallpaper.current(token))return;
    const fallback=AstralWallpaper.hasWallpaper()?true:await AstralWallpaper.showDailyFallback(this.config.useBigImage,token).catch(()=>false);
-   if(!fallback&&AstralWallpaper.current(token))AstralStore.notify(e.message+'；每日壁纸备用源也不可用','Bing 壁纸暂时不可用');
+   if(!fallback&&AstralWallpaper.current(token))AstralStore.notify('', '获取 Bing 壁纸失败');
   }finally{this.finishWallpaper()}
  },
  async changeWallpaper(){
@@ -109,7 +117,7 @@ const myNewTabWE={config:{},sites:[],css:{},busy:false,
   try{
    if(!this.config.autoChange){
     const found=await AstralWallpaper.fromHistory(this.config.bingMaxHistory,this.config.useBigImage,true,token);
-    if(!found&&AstralWallpaper.current(token))AstralStore.notify('暂无已缓存的 Bing 壁纸');
+    if(!found&&AstralWallpaper.current(token))AstralStore.notify('', '暂无已缓存的 Bing 壁纸');
     return;
    }
    const count=Math.max(1,Math.min(8,Number(this.config.bingMaxHistory)||8)),today=new Date().toLocaleDateString('en-CA'),key='astral.wallpaper.selection';
@@ -123,7 +131,7 @@ const myNewTabWE={config:{},sites:[],css:{},busy:false,
    if(!AstralWallpaper.current(token))return;
    AstralStore.safeSet('astral.wallpaper.legacy-pin','0');state.index=next;
    try{AstralStore.safeSet(key,JSON.stringify(state))}catch{}
-  }catch(e){if(AstralWallpaper.current(token))AstralStore.notify(e.message+'；历史壁纸切换需要获取 Bing 元数据','切换 Bing 壁纸失败')}
+  }catch(e){if(AstralWallpaper.current(token))AstralStore.notify('', '获取 Bing 壁纸失败')}
   finally{this.finishWallpaper()}
  },
  initListeners(){
@@ -132,8 +140,8 @@ const myNewTabWE={config:{},sites:[],css:{},busy:false,
   addEventListener('keydown',e=>{if(e.ctrlKey&&e.key.toLowerCase()==='q')document.querySelectorAll('[name="yooo"]').forEach(n=>n.hidden=false)});
   addEventListener('keyup',()=>document.querySelectorAll('[name="yooo"]').forEach(n=>n.hidden=true));
   addEventListener('storage',e=>{if(e.key==='astral.wallpaper.selection'&&e.newValue===null){this.refreshWallpaper(true);return}if(e.key!=='astral.web.settings'&&e.key!==null)return;const data=AstralStore.read();const old=this.config;const oldCss=this.css;this.config=data.config;AstralWallpaper.configure(this.config).catch(console.warn);this.sites=data.sites;this.css=data.css;document.title=this.config.title;if(JSON.stringify(data.sites)!==JSON.stringify(this.renderedSites)||old.newTabOpen!==this.config.newTabOpen)this.initSites();if(oldCss.index!==this.css.index)this.initCss();if(old.weatherLatitude!==this.config.weatherLatitude||old.weatherLongitude!==this.config.weatherLongitude||old.weatherCity!==this.config.weatherCity||old.weatherMode!==this.config.weatherMode||old.weatherLocationMode!==this.config.weatherLocationMode)AstralWeather.refresh(this.config);if(old.extensionFeatures.userImage!==this.config.extensionFeatures.userImage||old.extensionFeatures.userImageSrc!==this.config.extensionFeatures.userImageSrc||old.extensionFeatures.autoChange!==this.config.extensionFeatures.autoChange)this.initImage();if(old.useBigImage!==this.config.useBigImage||(old.bingMaxHistory!==this.config.bingMaxHistory&&this.config.extensionFeatures.autoChange))this.refreshWallpaper(true)});
-  // Passive location refresh only for an explicitly enabled auto-location mode.
-  // Permission must already be granted; never prompt simply because the tab regained focus.
+
+
   const LOCATION_INTERVAL=6*60*60*1000;
   const LOCATION_ATTEMPT_KEY='astral.weather.auto-location-attempt';
   let locating=false;
@@ -142,7 +150,7 @@ const myNewTabWE={config:{},sites:[],css:{},busy:false,
    const now=Date.now();let previous=Number(AstralStore.safeGet(LOCATION_ATTEMPT_KEY))||0;
    if(previous>now)previous=0;
    if(now-previous<LOCATION_INTERVAL)return;
-   // Query permission before recording an attempt, so unsupported/denied states never prompt.
+
    let permission;try{permission=await navigator.permissions.query({name:'geolocation'})}catch{return}
    if(permission.state!=='granted'||locating||this.config.weatherMode!=='native'||this.config.weatherLocationMode!=='auto')return;
    const expected=JSON.stringify([this.config.weatherMode,this.config.weatherLocationMode,this.config.weatherLatitude,this.config.weatherLongitude,this.config.weatherCity]);
@@ -155,10 +163,7 @@ const myNewTabWE={config:{},sites:[],css:{},busy:false,
     const latitude=position.coords.latitude,longitude=position.coords.longitude;
     if(!Number.isFinite(latitude)||!Number.isFinite(longitude))return;
     const moved=Math.abs(latitude-Number(this.config.weatherLatitude))>0.001||Math.abs(longitude-Number(this.config.weatherLongitude))>0.001;
-    // Even when coordinates match the stored defaults, a first successful
-    // geolocation must resolve the city label (e.g. a fresh auto-mode setup).
-    // Weather always uses precise coordinates; city is a display label only.
-    // Keep the existing label while resolving the new location in the background.
+
     const city=await AstralWeather.resolveCity(latitude,longitude)||AstralWeather.coordinateLabel(latitude,longitude);
     if(!stillCurrent())return;
     if(!moved&&city===this.config.weatherCity)return;
@@ -170,8 +175,8 @@ const myNewTabWE={config:{},sites:[],css:{},busy:false,
   };
   let lastWeather=Date.now(),lastWallpaper=Date.now(),lastDate=new Date().toDateString();
   const refreshOnReturn=()=>{if(document.visibilityState!=='visible')return;const now=Date.now(),day=new Date().toDateString();if(day!==lastDate){lastDate=day;this.initDate();if(this.config.autoChange&&!this.config.userImage)this.refreshWallpaper()}if(now-lastWeather>=3600000){lastWeather=now;AstralWeather.refresh(this.config)}updateLocationOnReturn()};
-  // Run once on initial page load as well as on later returns.
-  // Otherwise the first auto-location session never resolves its city name.
+
+
   queueMicrotask(updateLocationOnReturn);
   document.addEventListener('visibilitychange',refreshOnReturn);
   addEventListener('focus',refreshOnReturn);
@@ -205,4 +210,4 @@ const myNewTabWE={config:{},sites:[],css:{},busy:false,
   }
  }
 };
-myNewTabWE.init().catch(e=>{document.documentElement.removeAttribute('data-astral-loading');console.error('Astral 首页初始化失败',e);AstralStore.notify(e.message+'（请查看控制台中的错误位置）','初始化失败')});
+myNewTabWE.init().catch(e=>{document.documentElement.removeAttribute('data-astral-loading');console.error('Astral 首页初始化失败',e);AstralStore.notify(e.message,'主页加载失败')});

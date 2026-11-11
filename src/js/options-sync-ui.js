@@ -2,7 +2,7 @@
 *   by rongpengli
 *   https://github.com/rongpengli/
 **************************************************/
-/* Compact sync controls share the same row and native selects as other options. */
+
 'use strict';
 (async()=>{
  await AstralStore.ready;
@@ -36,14 +36,14 @@
   const s=await state(),failure=(await chrome.storage.local.get('__astralImportFailure')).__astralImportFailure;
   const cloudPending=!!s.importUploadPending||failure?.kind==='cloud';
   if(cloudPending||failure){
-   const prompt=cloudPending?'配置已导入本机，但尚未同步成功。关闭同步将停止自动重试，是否继续？':'最近一次配置导入失败，是否关闭同步？';
+   const prompt=cloudPending?'云同步尚未完成。关闭后将停止自动重试，是否继续？':'配置导入曾失败，确定关闭同步？';
    if(!confirm(prompt)){await render();return}
   }
-  action('disable',false,cloudPending?'本机配置已保留，未完成的上传已停止自动重试':failure?'最近一次导入未成功，请检查文件后重新导入':null);
+  action('disable',false,cloudPending?'本机配置已保留，已停止同步重试':failure?'请检查配置后重新导入':null);
  });
  el('astral-sync-retry').addEventListener('click',()=>action('run'));
- el('astral-sync-push').addEventListener('click',()=>{if(confirm('以本机配置覆盖云端？请先确认本机网址完整并已备份。'))action('upload')});
- el('astral-sync-pull').addEventListener('click',()=>{if(confirm('从云端恢复将替换本机配置，并先自动备份当前配置。确定继续？'))action('download')});
+ el('astral-sync-push').addEventListener('click',()=>{if(confirm('将用本机配置覆盖云端。请确认本机数据完整且已备份。是否继续？'))action('upload')});
+ el('astral-sync-pull').addEventListener('click',()=>{if(confirm('云端恢复将覆盖本机配置，操作前会自动备份。是否继续？'))action('download')});
  chrome.storage.onChanged.addListener((changes,area)=>{if(area==='local'&&'__astralSync' in changes)render().catch(()=>{})});
  await render();
 })();

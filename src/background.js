@@ -23,7 +23,7 @@ chrome.runtime.onMessage.addListener((message,sender,sendResponse)=>{
  AstralSync.prepareLocal().then(()=>sendResponse({ok:true}),error=>sendResponse({ok:false,error:String(error.message||error)}));
  return true;
 });
-// New tabs can request an initial cloud-to-local reconciliation before rendering.
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type !== 'ASTRAL_SYNC_READY') return;
   (async () => {

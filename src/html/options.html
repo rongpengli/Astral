@@ -67,11 +67,44 @@
             </div>
         </div>
     </div>
-	<div id="logo">
-		<a href="https://github.com/rongpengli/Astral" target="_blank">
-			<img src="../image/astral-256.png" width="44" height="44" alt="">  Astral 新标签页
-		</a>
-	</div>
+
+    <div id="bookmark-modal" role="dialog" aria-modal="true" aria-labelledby="bookmark-heading">
+      <div class="group">
+        <div class="header" id="bookmark-heading">导入书签</div>
+        <div class="content bookmark-modal-content">
+          <div class="bookmark-source"><span>导入来源</span><button id="bookmark-chrome" type="button">Chrome 书签</button><button id="bookmark-html" type="button">HTML 文件</button><label class="bookmark-limit-label" for="bookmark-max-rows">导入行数上限 <input id="bookmark-max-rows" type="number" min="1" max="999" step="1" value="12" aria-label="书签导入行数上限"> 行</label><input id="bookmark-file" type="file" accept=".html,.htm,text/html" hidden></div>
+          <div class="bookmark-label">选择文件夹（勾选父文件夹将选中子文件夹，可单独取消）</div>
+          <div id="bookmark-folders" class="bookmark-folders" aria-label="书签文件夹"></div>
+          <div class="bookmark-modes"><span>导入方式</span><label class="inline-choice"><input id="bookmark-merge" name="bookmark-mode" type="radio" checked> 合并</label><label class="inline-choice"><input id="bookmark-replace" name="bookmark-mode" type="radio"> 替换</label></div>
+          <div class="bookmark-label">目标分组</div><div id="bookmark-targets" class="bookmark-targets"></div>
+          <div id="bookmark-stats" class="bookmark-stats" role="status"></div>
+          <div id="bookmark-message" class="bookmark-message" role="status" aria-live="polite"></div>
+          <div id="bookmark-sync-hint" class="bookmark-message"></div>
+          <div id="bookmark-replace-confirm" class="bookmark-replace-confirm" hidden><p id="bookmark-replace-note"></p><button id="bookmark-replace-no" type="button">返回</button> <button id="bookmark-replace-yes" type="button">确定替换</button></div>
+          <div class="dialog-confirm"><button id="bookmark-cancel" type="button">取消</button><button id="bookmark-confirm" type="button" disabled>确认导入</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="customize-modal" role="dialog" aria-modal="true" aria-labelledby="customize-heading" aria-describedby="customize-tips">
+      <div class="group">
+        <div class="header">
+          <span id="customize-heading">定制主页</span>
+          <div class="header-actions customize-actions">
+            <button id="index-browse" type="button">浏览</button>
+            <button id="index-default" type="button">默认</button>
+            <button id="index-save" type="button">保存</button>
+            <button id="customize-close" type="button">关闭</button>
+          </div>
+        </div>
+        <div class="content customize-modal-content">
+          <p id="customize-tips" role="status" aria-live="polite"></p>
+          <pre id="index-css-preview" class="index-css-preview" tabindex="0" hidden></pre>
+          <textarea id="index-css" autocomplete="off" spellcheck="false" placeholder="在此编辑主页 CSS"></textarea>
+        </div>
+      </div>
+    </div>
+	<div id="logo"><span class="logo-title"><img src="../image/astral-256.png" width="44" height="44" alt="">  Astral 新标签页</span></div>
 	<div class="group">
         <div class="header"><span class="header-label">选项</span><span id="save-status" role="status" aria-live="polite"></span>
                 <div class="header-actions"><button id="config-default">恢复默认</button></div>
@@ -151,6 +184,7 @@
                         <button id="import">导入</button>
                         <button id="export">导出</button>
                         <button id="open-customize" type="button">定制页面</button>
+                        <a class="auxiliary-button" href="https://github.com/rongpengli/Astral" target="_blank" rel="noopener noreferrer">开源代码</a>
                     </div></td>
                 </tr>
             </table>
@@ -160,7 +194,7 @@
 
 	<div class="group">
 		<div class="header"><span class="header-label">导航网址</span>
-                <div class="header-actions"><button id="new-group">增加分组</button></div>
+                <div class="header-actions"><button id="bookmark-open" type="button">导入书签</button><button id="new-group">增加分组</button></div>
             </div>
 		<div class="content" id="sites">
 			<div class="group" id="template-group" hidden="hidden">
@@ -169,7 +203,7 @@
             </div>
 				<div class="content">
 					<table class="group-table">
-						<tr class="navigation-heading"><th class="site-info"><span class="row-title">标题</span><span class="row-icon">图标</span><span class="row-url">网址</span></th><th class="site-actions">操作</th></tr>
+						<tr class="navigation-heading"><th class="site-info"><span class="row-drag-spacer" aria-hidden="true"></span><span class="row-title">标题</span><span class="row-icon">图标</span><span class="row-url">网址</span></th><th class="site-actions">操作</th></tr>
 						<tr class="template-row" hidden="hidden">
 							<td class="site-info"><span class="row-title"></span>
 							<span class="row-icon"><img /></span>
@@ -193,6 +227,9 @@
 <script src="../js/wallpaper.js"></script>
 <script src="../js/weather.js"></script>
 <script src="../js/options.js"></script>
+<script src="../js/customize.js"></script>
+<script src="../js/bookmark-import.js"></script>
+<script src="../js/options-drag.js"></script>
 <script src="../js/options-sync-ui.js"></script>
 <script src="../js/extension-options.js"></script>
 </body>

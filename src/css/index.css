@@ -282,3 +282,17 @@ body {font-size:16px;}
 #navtitle .nav-actions a {align-items:center;line-height:1.5;}
 
 #change-wallpaper[hidden], #download-wallpaper[hidden] {display:none!important;}
+
+
+#navtable td a .astral-site-title {display:block;flex:0 1 auto;min-width:0;max-width:var(--astral-title-max-width, 100px);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+#navtable td a {align-items:center!important;}
+
+
+#navtable .astral-group-title {
+ display: inline-block;
+ max-width: var(--astral-group-title-max-width, 5em);
+ overflow: hidden;
+ text-overflow: ellipsis;
+ white-space: nowrap;
+ vertical-align: top;
+}

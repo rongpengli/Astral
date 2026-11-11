@@ -160,7 +160,7 @@ const AstralWallpaper=(()=>{
   chrome.runtime.sendMessage({type:'ASTRAL_WALLPAPER_SHOWN',url,name}).catch(()=>{});
   return {url,name,blob};
  }
- // Fill the selected history in the background, one image at a time.
+
  const pendingCache=new Map();
  async function cacheHistory(entries,size,token){
   for(const entry of entries){

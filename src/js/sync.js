@@ -55,7 +55,7 @@ const AstralSync = (() => {
     v.sites = AstralSiteIds.normalize(v.sites);
     if (typeof v.config.userImageSrc === 'string' && v.config.userImageSrc.startsWith('data:')) {
       v.config.userImageSrc=''; omitted.push('config.userImageSrc');
-      // A local-only wallpaper should not be enabled on another device.
+
       v.config.userImage = false;
     }
     for (const group of v.sites) for (const site of (group.list||[])) {

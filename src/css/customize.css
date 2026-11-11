@@ -1,9 +1,0 @@
-/**************************************************
-*   by rongpengli
-*   https://github.com/rongpengli/
-*   Fork from sakuyaa's Firefox Extension myNewTabWE.
-*   https://github.com/sakuyaa/
-**************************************************/
-@import url('./options.css');
-textarea {display:block;width:100%;min-height:320px;padding:12px;border:1px solid var(--control-border);border-radius:4px;background:var(--control-bg);resize:vertical;tab-size:4;font:13px/1.5 ui-monospace,Consolas,monospace;}
-#tips:empty {display:none;}

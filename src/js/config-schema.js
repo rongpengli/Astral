@@ -4,7 +4,7 @@
 **************************************************/
 'use strict';
 const ASTRAL_DEFAULTS = {
- config:{newTabOpen:true,title:'Astral 新标签页',useBigImage:2,bingMaxHistory:8,weatherLatitude:39.9042,weatherLongitude:116.4074,weatherCity:'北京',weatherMode:'native',weatherLocationMode:'manual'},
+ config:{newTabOpen:true,title:'Astral 新标签页',useBigImage:2,bingMaxHistory:8,weatherLatitude:39.9042,weatherLongitude:116.4074,weatherCity:'北京',weatherMode:'native',weatherLocationMode:'manual',bookmarkImportMaxRows:12},
  sites:[],css:{version:0,index:''}
 };
 const AstralSchema=(()=>{
@@ -38,6 +38,10 @@ const AstralSchema=(()=>{
   if(Object.hasOwn(config,'syncEnabled') && typeof config.syncEnabled!=='boolean')throw Error('syncEnabled 必须为 true 或 false');
   for(const k of ['title','weatherCity'])if(typeof config[k]!=='string')throw Error(k+' 类型错误');
   for(const k of ['newTabOpen'])if(typeof config[k]!=='boolean')throw Error(k+' 类型错误');
+
+
+  const importRows=Number(config.bookmarkImportMaxRows);
+  config.bookmarkImportMaxRows=Number.isInteger(importRows)&&importRows>=1&&importRows<=999?importRows:12;
   config.useBigImage=[0,1,2].includes(Number(config.useBigImage))?Number(config.useBigImage):2;
   // Original extension: maximum recent Bing images available to the manual switch button.
 
