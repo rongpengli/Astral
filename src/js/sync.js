@@ -9,7 +9,7 @@ const AstralSync = (() => {
   const META = '__astralSync';
   const DEFAULTS_KEY='__astralDefaultOpenRevision',DEFAULTS_REVISION='1.12.5-default-on1';
   const KEYS = ['config', 'sites', 'css'];
-  const MAX_ITEM = 7900, MAX_TOTAL = 45000;
+  const MAX_ITEM = 7900, MAX_TOTAL = 100000;
   const enc = new TextEncoder();
   const bytes = x => enc.encode(x).length;
   const clone = x => JSON.parse(JSON.stringify(x));
@@ -78,7 +78,7 @@ const AstralSync = (() => {
     }
     out[PREFIX + generation + ':' + n] = buf;
     if (Object.entries(out).reduce((sum,[k,v]) => sum + bytes(k) + bytes(JSON.stringify(v)),0) > MAX_TOTAL)
-      throw Error('同步配置超过约 45 KB 的双版本安全容量预算；请减少自定义 CSS 或图标');
+      throw Error('同步配置超过约 100 KB 的同步预算；请减少自定义 CSS 或图标');
     return out;
   }
   async function readRemote() {
