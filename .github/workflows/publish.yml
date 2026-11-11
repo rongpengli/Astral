@@ -1,4 +1,3 @@
-
 name: Publish browser extension
 
 on:
@@ -237,6 +236,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Download shared package
         uses: actions/download-artifact@v4
         with:
@@ -262,81 +266,15 @@ jobs:
       - name: Generate release notes
         env:
           VERSION: ${{ needs.build.outputs.version }}
-          TAG: ${{ needs.build.outputs.tag }}
         run: |
-          python - <<'PY'
-          import os
-          import re
-          import subprocess
-          from pathlib import Path
+          test -f scripts/generate_release_notes.py || {
+            echo "Missing scripts/generate_release_notes.py"
+            exit 1
+          }
 
-          version = os.environ["VERSION"]
-          tag = os.environ["TAG"]
-
-          def git(*args):
-              return subprocess.check_output(
-                  ["git", *args],
-                  text=True
-              ).strip()
-
-          def version_key(value):
-              match = re.fullmatch(
-                  r"v(\d+(?:\.\d+){1,3})",
-                  value
-              )
-              if not match:
-                  return None
-              return tuple(
-                  int(x) for x in match.group(1).split(".")
-              )
-
-          tags = git(
-              "tag",
-              "--merged",
-              "HEAD",
-              "--list",
-              "v*"
-          ).splitlines()
-
-          current = version_key(tag)
-
-          previous_tags = [
-              t for t in tags
-              if version_key(t) is not None
-              and version_key(t) < current
-          ]
-
-          lines = ["## 更新日志", ""]
-
-          if previous_tags:
-              previous = max(
-                  previous_tags,
-                  key=version_key
-              )
-
-              changes = git(
-                  "log",
-                  "--pretty=format:- %s (%h)",
-                  f"{previous}..HEAD",
-                  "--",
-                  "src/"
-              )
-
-              lines.append(
-                  changes or "No changes in `src/`."
-              )
-          else:
-              lines.append("Initial release.")
-
-          Path("release-notes.md").write_text(
-              "\n".join(lines) + "\n",
-              encoding="utf-8"
-          )
-
-          print(
-              Path("release-notes.md").read_text()
-          )
-          PY
+          python scripts/generate_release_notes.py \
+            --version "$VERSION" \
+            --output release-notes.md
 
       - name: Create GitHub Release
         env:
@@ -363,5 +301,5 @@ jobs:
             echo "- Git tag: ${TAG}"
             echo "- Chrome: submitted"
             echo "- Edge: submitted"
-            echo "- Release notes: src/ only"
+            echo "- Release notes: Git diff + module detection"
           } >> "$GITHUB_STEP_SUMMARY"
