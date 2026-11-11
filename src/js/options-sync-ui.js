@@ -42,8 +42,8 @@
   action('disable',false,cloudPending?'本机配置已保留，已停止同步重试':failure?'请检查配置后重新导入':null);
  });
  el('astral-sync-retry').addEventListener('click',()=>action('run'));
- el('astral-sync-push').addEventListener('click',()=>{if(confirm('将用本机配置覆盖云端。请确认本机数据完整且已备份。是否继续？'))action('upload')});
- el('astral-sync-pull').addEventListener('click',()=>{if(confirm('云端恢复将覆盖本机配置，操作前会自动备份。是否继续？'))action('download')});
+    el('astral-sync-push').addEventListener('click', () => { if (confirm('将用本机配置覆盖云端。请确认本机数据完整。是否继续？')) action('upload') });
+    el('astral-sync-pull').addEventListener('click', () => { if (confirm('云端恢复将覆盖本机配置。建议恢复前备份本机数据。是否继续？')) action('download') });
  chrome.storage.onChanged.addListener((changes,area)=>{if(area==='local'&&'__astralSync' in changes)render().catch(()=>{})});
  await render();
 })();
