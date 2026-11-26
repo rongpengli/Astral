@@ -120,37 +120,75 @@ const myNewTabWE={config:{},sites:[],css:{},bingIndex:0,images:[],busy:false,
   addEventListener('storage',e=>{if(e.key==='astral.wallpaper.selection'&&e.newValue===null){this.refreshWallpaper(true);return}if(e.key!=='astral.web.settings'&&e.key!==null)return;const data=AstralStore.read();const old=this.config;const oldCss=this.css;this.config=data.config;AstralWallpaper.configure(this.config).catch(console.warn);this.sites=data.sites;this.css=data.css;document.title=this.config.title;this.initSites();if(oldCss.index!==this.css.index)this.initCss();if(old.weatherLatitude!==this.config.weatherLatitude||old.weatherLongitude!==this.config.weatherLongitude||old.weatherCity!==this.config.weatherCity||old.weatherMode!==this.config.weatherMode||old.weatherLocationMode!==this.config.weatherLocationMode)AstralWeather.refresh(this.config);if(old.useBigImage!==this.config.useBigImage||old.bingMaxHistory!==this.config.bingMaxHistory)this.refreshWallpaper()});
 
 
-  const LOCATION_INTERVAL=6*60*60*1000;
-  const LOCATION_ATTEMPT_KEY='astral.weather.auto-location-attempt';
-  let locating=false;
-  const updateLocationOnReturn=async()=>{
-   if(locating||this.config.weatherMode==='off'||this.config.weatherLocationMode!=='auto'||document.visibilityState!=='visible'||!isSecureContext||!navigator.geolocation||!navigator.permissions?.query)return;
-   const now=Date.now();let previous=Number(AstralStore.safeGet(LOCATION_ATTEMPT_KEY))||0;
-   if(previous>now)previous=0;
-   if(now-previous<LOCATION_INTERVAL)return;
-
-   let permission;try{permission=await navigator.permissions.query({name:'geolocation'})}catch{return}
-   if(permission.state!=='granted'||locating||this.config.weatherMode==='off'||this.config.weatherLocationMode!=='auto')return;
-   const expected=JSON.stringify([this.config.weatherMode,this.config.weatherLocationMode,this.config.weatherLatitude,this.config.weatherLongitude,this.config.weatherCity]);
-   const stillCurrent=()=>{const c=AstralStore.read().config;return c.weatherMode!=='off'&&c.weatherLocationMode==='auto'&&JSON.stringify([c.weatherMode,c.weatherLocationMode,c.weatherLatitude,c.weatherLongitude,c.weatherCity])===expected};
-   locating=true;
-   try{AstralStore.safeSet(LOCATION_ATTEMPT_KEY,String(now))}catch{}
-   try{
-    const position=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:10000,maximumAge:1800000}));
-    if(!stillCurrent())return;
-    const latitude=position.coords.latitude,longitude=position.coords.longitude;
-    if(!Number.isFinite(latitude)||!Number.isFinite(longitude))return;
-    const moved=Math.abs(latitude-Number(this.config.weatherLatitude))>0.001||Math.abs(longitude-Number(this.config.weatherLongitude))>0.001;
-
-    const city=await AstralWeather.resolveCity(latitude,longitude)||AstralWeather.coordinateLabel(latitude,longitude);
-    if(!stillCurrent())return;
-    if(!moved&&city===this.config.weatherCity)return;
-    const config={...this.config,weatherLatitude:latitude,weatherLongitude:longitude,weatherCity:city};
-    const updated=AstralStore.write({config});this.config=updated.config;
-    AstralWeather.refresh(this.config);
-   }catch(e){console.info('自动位置后台更新未成功，继续使用保存的坐标',e)}
-   finally{locating=false}
+  // Runtime-only location scheduling; never exported or synchronized.
+  const LOCATION_INTERVAL=6*60*60*1000, RETRY=5*60*1000, GAP=5*60*1000;
+  const prefix='astral.weather.location.';
+  const stamp=key=>{const n=Number(AstralStore.safeGet(prefix+key));return Number.isFinite(n)&&n>0&&n<=Date.now()?n:0};
+  const save=(key,value)=>{try{AstralStore.safeSet(prefix+key,String(value))}catch{}};
+  const enabled=c=>c.weatherMode==='native'&&c.weatherLocationMode==='auto';
+  let locating=false,permission=null,lastTick=Date.now();
+  const markPending=()=>save('pending',Date.now());
+  const activity=()=>{
+   const now=Date.now(),previous=stamp('active');
+   if((previous&&now-previous>=GAP)||now-lastTick>=GAP)markPending();
+   lastTick=now;save('active',now);
+   if(!navigator.onLine){if(!stamp('offline'))save('offline',now);return}
+   const offline=stamp('offline');
+   if(offline&&now-offline>=GAP)markPending();
+   if(offline)save('offline',0);
   };
+  const updateLocationOnReturn=async()=>{
+   activity();
+   if(locating||!enabled(this.config)||document.visibilityState!=='visible'||!isSecureContext||!navigator.geolocation||!navigator.onLine)return;
+   locating=true;
+   const run=async()=>{
+    if(!enabled(AstralStore.read().config)||document.visibilityState!=='visible'||!navigator.onLine)return;
+    const now=Date.now(),pending=stamp('pending'),success=stamp('success'),attempt=stamp('attempt');
+    const force=pending>0;
+    if(attempt&&now-attempt<RETRY)return;
+    if(!force&&success&&now-success<LOCATION_INTERVAL)return;
+    try{permission=permission||await navigator.permissions?.query({name:'geolocation'})}catch{return}
+    if(permission?.state!=='granted')return;
+    const current=AstralStore.read().config;
+    if(!enabled(current)||document.visibilityState!=='visible'||!navigator.onLine)return;
+    const signature=c=>JSON.stringify([c.weatherMode,c.weatherLocationMode,c.weatherLatitude,c.weatherLongitude,c.weatherCity]);
+    const expected=signature(current);
+    const stillCurrent=()=>signature(AstralStore.read().config)===expected;
+    save('attempt',Date.now());
+    try{
+     const position=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:10000,maximumAge:force||!success?0:1800000}));
+     if(!stillCurrent())return;
+     const {latitude,longitude}=position.coords;
+     if(!Number.isFinite(latitude)||!Number.isFinite(longitude))return;
+     const city=await AstralWeather.resolveCity(latitude,longitude)||AstralWeather.coordinateLabel(latitude,longitude);
+     if(!stillCurrent())return;
+     const latest=AstralStore.read().config;
+     const moved=Math.abs(latitude-Number(latest.weatherLatitude))>0.001||Math.abs(longitude-Number(latest.weatherLongitude))>0.001;
+     if(moved||city!==latest.weatherCity)this.config=AstralStore.write({config:{...latest,weatherLatitude:latitude,weatherLongitude:longitude,weatherCity:city}}).config;
+     else this.config=latest;
+     save('success',Date.now());
+     if(stamp('pending')===pending)save('pending',0);
+     AstralWeather.refresh(this.config);
+    }catch(e){console.info('自动定位未成功，继续使用保存的坐标',e)}
+   };
+   try{
+    if(navigator.locks?.request)await navigator.locks.request(prefix+'lock',{ifAvailable:true},lock=>lock?run():undefined);
+    else await run(); // Shared attempt timestamp provides best-effort deduplication.
+   }catch(e){console.info('自动定位调度未成功',e)}finally{locating=false}
+  };
+  addEventListener('offline',()=>{if(!stamp('offline'))save('offline',Date.now())});
+  addEventListener('online',updateLocationOnReturn);
+  addEventListener('storage',e=>{
+   if(e.key!=='astral.web.settings'&&e.key!==null)return;
+   const c=AstralStore.read().config;
+   if(enabled(c)&&!wasEnabled){markPending();updateLocationOnReturn()}
+   wasEnabled=enabled(c);
+  });
+  let wasEnabled=enabled(this.config);
+  if(navigator.permissions?.query)navigator.permissions.query({name:'geolocation'}).then(p=>{
+   permission=p;
+   p.addEventListener?.('change',()=>{if(p.state==='granted'){markPending();save('attempt',0);updateLocationOnReturn()}});
+  }).catch(()=>{});
   let lastWeather=Date.now(),lastWallpaper=Date.now(),lastDate=new Date().toDateString();
   const refreshOnReturn=()=>{if(document.visibilityState!=='visible')return;const now=Date.now(),day=new Date().toDateString();if(day!==lastDate){lastDate=day;this.initDate();this.refreshWallpaper()}if(now-lastWeather>=3600000){lastWeather=now;AstralWeather.refresh(this.config)}updateLocationOnReturn()};
 
@@ -163,7 +201,7 @@ const myNewTabWE={config:{},sites:[],css:{},bingIndex:0,images:[],busy:false,
    if(day!==lastDate){lastDate=day;this.initDate();this.refreshWallpaper()}
    if(now-lastWeather>=3600000){lastWeather=now;this.initDate();AstralWeather.refresh(this.config)}
    if(now-lastWallpaper>=3600000){lastWallpaper=now;this.refreshWallpaper()}
-   if(document.visibilityState==='visible')updateLocationOnReturn();
+   updateLocationOnReturn();
   },60000);
  },
  async init(){

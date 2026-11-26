@@ -27,6 +27,7 @@ let myNewTabWE = {
     myNewTabWE.cancelLocation?.();
     let locationWarning='';
     if(data.config.weatherMode==='native'&&data.config.weatherLocationMode==='auto'){
+      try{AstralStore.safeSet('astral.weather.location.pending',String(Date.now()));AstralStore.safeSet('astral.weather.location.attempt','0')}catch{}
       try{
         if(!window.isSecureContext||!navigator.geolocation)throw Error('当前环境不支持浏览器定位（需要 HTTPS 或 localhost）');
         const pos=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:10000,maximumAge:300000}));
@@ -34,10 +35,7 @@ let myNewTabWE = {
         data.config.weatherCity=await AstralWeather.resolveCity(pos.coords.latitude,pos.coords.longitude)||AstralWeather.coordinateLabel(pos.coords.latitude,pos.coords.longitude);
       }catch(e){
 
-        data.config.weatherLatitude=30.2741;
-        data.config.weatherLongitude=120.1551;
-        data.config.weatherCity='杭州';
-        locationWarning='；自动定位未成功，已使用杭州作为默认位置，可在天气设置中重新定位';
+        locationWarning='；自动定位未成功，保留导入的位置，可在天气设置中重新定位';
       }
     }
     const imported=AstralStore.replace(data);for(const id of ['weather-city','weather-lat','weather-lon'])delete $id(id).dataset.dirty;myNewTabWE.config=imported.config;myNewTabWE.sites=imported.sites;myNewTabWE.initConf();myNewTabWE.renderSites();dispatchEvent(new StorageEvent('storage',{key:'astral.web.settings'}));
@@ -239,9 +237,10 @@ let myNewTabWE = {
   const commit=patch=>{try{clearDraft();myNewTabWE.config=AstralStore.write({config:{...AstralStore.read().config,...patch}}).config;myNewTabWE.initConf();return true}catch(e){myNewTabWE.notify(e.message,'天气设置保存失败');myNewTabWE.initConf();return false}};
   let locationRequest=0;
   for(const el of [city,lat,lon])el.addEventListener('input',()=>{el.dataset.dirty='1'});
-  $id('weather-mode').addEventListener('change',e=>{++locationRequest;commit({weatherMode:e.target.value})});
+   $id('weather-mode').addEventListener('change',e=>{++locationRequest;$id('location-refresh').disabled=false;if(commit({weatherMode:e.target.value})&&e.target.value==='native'&&myNewTabWE.config.weatherLocationMode==='auto')locate()});
   const locate=()=>{
     const request=++locationRequest;
+    try{AstralStore.safeSet('astral.weather.location.pending',String(Date.now()));AstralStore.safeSet('astral.weather.location.attempt',String(Date.now()))}catch{}
     if(!navigator.geolocation){status.textContent='当前浏览器不支持定位';return}
     status.textContent='正在请求浏览器位置…';$id('location-refresh').disabled=true;
     navigator.geolocation.getCurrentPosition(async position=>{
@@ -249,14 +248,14 @@ let myNewTabWE = {
       const {latitude,longitude}=position.coords;
       status.textContent='定位成功，正在查询城市名称…';
       const resolved=await AstralWeather.resolveCity(latitude,longitude,true);
-      if(request!==locationRequest)return;
+      if(request!==locationRequest||AstralStore.read().config.weatherLocationMode!=='auto'||AstralStore.read().config.weatherMode!=='native'){$id('location-refresh').disabled=false;return}
       const cityName=resolved||AstralWeather.coordinateLabel(latitude,longitude);
-      if(commit({weatherMode:'native',weatherLocationMode:'auto',weatherLatitude:latitude,weatherLongitude:longitude,weatherCity:cityName}))status.textContent=resolved?'定位成功：'+cityName:'已定位到 '+cityName+'，城市名称查询暂不可用，可重新定位重试';
+      if(commit({weatherMode:'native',weatherLocationMode:'auto',weatherLatitude:latitude,weatherLongitude:longitude,weatherCity:cityName})){try{AstralStore.safeSet('astral.weather.location.success',String(Date.now()));AstralStore.safeSet('astral.weather.location.pending','0');AstralStore.safeSet('astral.weather.location.attempt','0')}catch{}status.textContent=resolved?'定位成功：'+cityName:'已定位到 '+cityName+'，城市名称查询暂不可用，可重新定位重试';}
       $id('location-refresh').disabled=false;
     },error=>{if(request!==locationRequest)return;status.textContent='定位失败，继续使用已保存位置';$id('location-refresh').disabled=false;if(myNewTabWE.config.weatherLocationMode!=='auto')myNewTabWE.initConf()},
-    {enableHighAccuracy:false,timeout:10000,maximumAge:1800000});
+    {enableHighAccuracy:false,timeout:10000,maximumAge:0});
   };
-  $id('location-auto').addEventListener('change',e=>{if(e.target.checked){$id('weather-manual-fields').hidden=true;$id('location-refresh').hidden=false;locate()}});
+   $id('location-auto').addEventListener('change',e=>{if(e.target.checked&&commit({weatherLocationMode:'auto'}))locate()});
   $id('location-manual').addEventListener('change',e=>{if(e.target.checked){++locationRequest;$id('location-refresh').disabled=false;commit({weatherMode:'native',weatherLocationMode:'manual'});status.textContent='';++cityRequest;clearTimeout(cityTimer);cityController?.abort();hideChoices()}});
   $id('location-refresh').addEventListener('click',locate);
   const saveCoords=()=>{

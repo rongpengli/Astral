@@ -3,9 +3,9 @@
     "title": "Astral 新标签页",
     "useBigImage": 2,
     "bingMaxHistory": 8,
-    "weatherLatitude": 30.169022901212557,
-    "weatherLongitude": 120.0681910043781,
-    "weatherCity": "杭州市",
+    "weatherLatitude": 39.907333,
+    "weatherLongitude": 116.391083,
+    "weatherCity": "北京市",
     "weatherMode": "native",
     "autoChange": true,
     "autoDownload": false,
@@ -13,7 +13,7 @@
     "userImage": false,
     "userImageSrc": "",
     "newTabOpen": true,
-    "weatherLocationMode": "manual",
+    "weatherLocationMode": "auto",
     "syncEnabled": true
   },
   "sites": [
@@ -21,28 +21,33 @@
       "list": [
         {
           "title": "百度",
-          "url": "http://www.baidu.com/",
+          "url": "https://www.baidu.com/",
           "_syncId": "10cc1eb7-ac6f-525a-814c-7585f37db870"
         },
         {
-          "title": "谷歌",
-          "url": "https://www.google.com/",
-          "_syncId": "a8caa73d-b679-5075-8728-8385d1333ee4"
-        },
-        {
-          "title": "搜狗",
-          "url": "https://sogou.com/",
-          "_syncId": "c333a03b-f4ad-50cf-a5c9-31afe805ba9e"
-        },
-        {
           "title": "必应",
-          "url": "https://www.bing.com/",
+          "url": "https://cn.bing.com/",
           "_syncId": "2bef2d0d-2764-5e7c-8483-0e4fdd4ca3ff"
         },
         {
-          "title": "Duckduckgo",
-          "url": "https://duckduckgo.com/",
-          "_syncId": "668133a7-557c-5749-a033-e7303e325aff"
+          "title": "搜狗",
+          "url": "https://www.sogou.com/",
+          "_syncId": "c333a03b-f4ad-50cf-a5c9-31afe805ba9e"
+        },
+        {
+          "title": "360搜索",
+          "url": "https://www.so.com/",
+          "_syncId": "8ea73da0-b708-54d6-8b5d-498639fe878c"
+        },
+        {
+          "title": "夸克",
+          "url": "https://www.quark.cn/",
+          "_syncId": "aed7a1a8-a5ad-5379-a070-e15444bf8618"
+        },
+        {
+          "title": "百度百科",
+          "url": "https://baike.baidu.com/",
+          "_syncId": "2480a898-714f-5e95-8edb-a073ad0105ef"
         }
       ],
       "name": "搜索",
@@ -52,28 +57,33 @@
       "list": [
         {
           "title": "新华网",
-          "url": "http://www.xinhuanet.com/",
+          "url": "https://www.news.cn/",
           "_syncId": "4852565e-1089-55d7-b379-bec9c27b5f37"
         },
         {
           "title": "央视网",
-          "url": "http://www.cctv.com/",
+          "url": "https://www.cctv.com/",
           "_syncId": "c806f799-aad6-55bf-99ca-fbff80cafb03"
         },
         {
-          "title": "学习强国",
-          "url": "https://www.xuexi.cn/",
-          "_syncId": "24292b8a-a716-5488-95d0-29fb5d48eacf"
+          "title": "人民网",
+          "url": "https://www.people.com.cn/",
+          "_syncId": "d2866354-44eb-5a46-a7a1-5a9d77036b85"
         },
         {
-          "title": "腾讯",
-          "url": "http://www.qq.com/",
-          "_syncId": "a96cf8ea-7251-51c5-8855-1b778a0a8008"
+          "title": "中国新闻网",
+          "url": "https://www.chinanews.com.cn/",
+          "_syncId": "9dc9106b-71d2-57b6-b6e0-2415198b1683"
         },
         {
-          "title": "网易",
-          "url": "http://www.163.com/",
-          "_syncId": "444ed6be-be5e-5566-bc9b-0c44d33d2f74"
+          "title": "新浪",
+          "url": "https://www.sina.com.cn/",
+          "_syncId": "a194c9bf-ddf9-5ba9-8577-153aea04cd5d"
+        },
+        {
+          "title": "今日头条",
+          "url": "https://www.toutiao.com/",
+          "_syncId": "b1b70114-bb06-5e75-9846-a2222202ec91"
         }
       ],
       "name": "新闻",
@@ -82,14 +92,50 @@
     {
       "list": [
         {
-          "title": "爱奇艺",
-          "url": "http://www.iqiyi.com/",
-          "_syncId": "ce46f930-19bd-5f6e-bc31-7396802d30a5"
+          "title": "微博",
+          "url": "https://weibo.com/",
+          "_syncId": "035c2985-de86-5862-b80d-21f595d0aee5"
         },
         {
-          "title": "优酷",
-          "url": "https://www.youku.com/",
-          "_syncId": "476c3a37-97c6-5a34-817f-bcbdaf0414d5"
+          "title": "知乎",
+          "url": "https://www.zhihu.com/",
+          "_syncId": "8165c211-55fc-54c4-b6c6-ac96db2656ef"
+        },
+        {
+          "title": "小红书",
+          "url": "https://www.xiaohongshu.com/",
+          "_syncId": "681da971-cb25-5812-a815-bd25b1e1ab8e"
+        },
+        {
+          "title": "豆瓣",
+          "url": "https://www.douban.com/",
+          "_syncId": "d5be530d-0796-50c9-a631-e3b976cbd5c9"
+        },
+        {
+          "title": "百度贴吧",
+          "url": "https://tieba.baidu.com/",
+          "_syncId": "037e20d4-4b8e-55d1-9d64-447851aa8e6a"
+        },
+        {
+          "title": "虎扑",
+          "url": "https://www.hupu.com/",
+          "_syncId": "fade9a6d-1267-56ac-9d1e-ed216add328c"
+        }
+      ],
+      "name": "社交社区",
+      "_syncId": "46adeb28-624c-5ca2-8e63-ec402220a80c"
+    },
+    {
+      "list": [
+        {
+          "title": "哔哩哔哩",
+          "url": "https://www.bilibili.com/",
+          "_syncId": "a0aa4b1c-2124-50d2-af48-531bc744bea1"
+        },
+        {
+          "title": "抖音",
+          "url": "https://www.douyin.com/",
+          "_syncId": "2065c2c5-2714-5d31-a098-58f19e919e4f"
         },
         {
           "title": "腾讯视频",
@@ -97,18 +143,311 @@
           "_syncId": "7c34d106-6b7e-5c1e-9315-6c8533b11fc1"
         },
         {
-          "title": "哔哩哔哩",
-          "url": "https://www.bilibili.com/",
-          "_syncId": "a0aa4b1c-2124-50d2-af48-531bc744bea1"
+          "title": "爱奇艺",
+          "url": "https://www.iqiyi.com/",
+          "_syncId": "ce46f930-19bd-5f6e-bc31-7396802d30a5"
         },
         {
-          "title": "YouTube",
-          "url": "https://www.youtube.com/",
-          "_syncId": "3fe0be20-80bf-53b1-9dbc-086ef4b53aff"
+          "title": "网易云音乐",
+          "url": "https://music.163.com/",
+          "_syncId": "970e71c6-d0da-5146-a596-239c0ff22ff3"
+        },
+        {
+          "title": "QQ音乐",
+          "url": "https://y.qq.com/",
+          "_syncId": "bd9883f0-36d4-50c6-8c1e-f5abd36cd621"
         }
       ],
       "name": "影音",
       "_syncId": "afd71603-ce9c-5340-a400-7845d93f93f9"
+    },
+    {
+      "list": [
+        {
+          "title": "淘宝",
+          "url": "https://www.taobao.com/",
+          "_syncId": "d7cd4d31-39f0-50e4-91a0-af5b321b6327"
+        },
+        {
+          "title": "京东",
+          "url": "https://www.jd.com/",
+          "_syncId": "98e55443-9fde-5698-8597-a378c4ffad5b"
+        },
+        {
+          "title": "天猫",
+          "url": "https://www.tmall.com/",
+          "_syncId": "ab4335b9-e783-5e75-a7a2-de817956fdc2"
+        },
+        {
+          "title": "拼多多",
+          "url": "https://www.pinduoduo.com/",
+          "_syncId": "4f14a75e-ca0e-5878-9bc2-cd212c68f368"
+        },
+        {
+          "title": "闲鱼",
+          "url": "https://www.goofish.com/",
+          "_syncId": "71361d31-33da-5c8d-b83c-c09f574de0f6"
+        },
+        {
+          "title": "什么值得买",
+          "url": "https://www.smzdm.com/",
+          "_syncId": "d0d597c5-e76b-5d91-a370-d30c5f604b9f"
+        }
+      ],
+      "name": "购物",
+      "_syncId": "b281f9f7-2c88-5236-a973-8fee02cd887d"
+    },
+    {
+      "list": [
+        {
+          "title": "DeepSeek",
+          "url": "https://chat.deepseek.com/",
+          "_syncId": "3b5a86e0-47ab-54cf-afec-a7942020a79e"
+        },
+        {
+          "title": "豆包",
+          "url": "https://www.doubao.com/",
+          "_syncId": "b284a200-0537-5f65-8b5d-7ad59e6c0f78"
+        },
+        {
+          "title": "通义",
+          "url": "https://tongyi.aliyun.com/",
+          "_syncId": "5a8cc376-648c-5dd4-bf14-3b73aeb249af"
+        },
+        {
+          "title": "Kimi",
+          "url": "https://www.kimi.com/",
+          "_syncId": "4ecdcef1-cc4e-5723-a172-2cb17c9c2a00"
+        },
+        {
+          "title": "腾讯元宝",
+          "url": "https://yuanbao.tencent.com/",
+          "_syncId": "fca7db04-e825-5290-89a2-45de540a1183"
+        },
+        {
+          "title": "文心一言",
+          "url": "https://yiyan.baidu.com/",
+          "_syncId": "c7eda9d4-9cbe-55d1-ac57-35d9eed1a45d"
+        }
+      ],
+      "name": "AI助手",
+      "_syncId": "32d999a1-d08e-5fd2-813f-d257a543e207"
+    },
+    {
+      "list": [
+        {
+          "title": "WPS",
+          "url": "https://www.wps.cn/",
+          "_syncId": "b5a27ad8-b5e3-5a38-a2d2-167b0153c27b"
+        },
+        {
+          "title": "腾讯文档",
+          "url": "https://docs.qq.com/",
+          "_syncId": "54a03f0f-9972-549a-8ddc-f72dae8a1c92"
+        },
+        {
+          "title": "飞书",
+          "url": "https://www.feishu.cn/",
+          "_syncId": "92387eef-9770-5e8f-9e59-88f934d2425e"
+        },
+        {
+          "title": "钉钉",
+          "url": "https://www.dingtalk.com/",
+          "_syncId": "b24e565a-4edb-5851-a5c1-95f6c0922544"
+        },
+        {
+          "title": "百度网盘",
+          "url": "https://pan.baidu.com/",
+          "_syncId": "c47df807-5c84-543d-a822-fa1c945745e7"
+        },
+        {
+          "title": "阿里云盘",
+          "url": "https://www.alipan.com/",
+          "_syncId": "04b7db21-16d8-5583-84ec-fa07cd1f9dbe"
+        }
+      ],
+      "name": "办公协作",
+      "_syncId": "50a6b1c6-b757-546a-99f8-a205f522df31"
+    },
+    {
+      "list": [
+        {
+          "title": "铁路12306",
+          "url": "https://www.12306.cn/",
+          "_syncId": "81b3dbec-1166-5cdd-b121-decc74c43b65"
+        },
+        {
+          "title": "携程",
+          "url": "https://www.ctrip.com/",
+          "_syncId": "f30b7444-3643-59b4-a43c-f57322ae9a9e"
+        },
+        {
+          "title": "高德地图",
+          "url": "https://www.amap.com/",
+          "_syncId": "a7f4f12a-9d17-5fd0-9fcb-4c68debd6e0b"
+        },
+        {
+          "title": "美团",
+          "url": "https://www.meituan.com/",
+          "_syncId": "581b4c76-7a0f-56e3-8135-2aee49d99ff8"
+        },
+        {
+          "title": "大众点评",
+          "url": "https://www.dianping.com/",
+          "_syncId": "84a5dce7-cdc4-5bc2-8a72-a761a9820e94"
+        },
+        {
+          "title": "汽车之家",
+          "url": "https://www.autohome.com.cn/",
+          "_syncId": "3565c2a0-7206-569b-8376-244b4fe5a4c5"
+        }
+      ],
+      "name": "生活出行",
+      "_syncId": "1b84ac2a-3de7-5a97-9c5d-e28e2af11818"
+    },
+    {
+      "list": [
+        {
+          "title": "中国大学MOOC",
+          "url": "https://www.icourse163.org/",
+          "_syncId": "f51f871d-8b45-541c-8e4d-cf6bdb4f3776"
+        },
+        {
+          "title": "中国知网",
+          "url": "https://www.cnki.net/",
+          "_syncId": "48fa7f32-2477-5c72-8246-529b28f4e581"
+        },
+        {
+          "title": "学信网",
+          "url": "https://www.chsi.com.cn/",
+          "_syncId": "69295f42-1e42-56ce-9a3b-35dd20998f9b"
+        },
+        {
+          "title": "学习强国",
+          "url": "https://www.xuexi.cn/",
+          "_syncId": "24292b8a-a716-5488-95d0-29fb5d48eacf"
+        },
+        {
+          "title": "百度翻译",
+          "url": "https://fanyi.baidu.com/",
+          "_syncId": "faee3a1c-587e-5984-9e71-02ed55fefbe6"
+        },
+        {
+          "title": "有道翻译",
+          "url": "https://fanyi.youdao.com/",
+          "_syncId": "07810d6b-a425-57bd-bf81-236de6e7e71b"
+        }
+      ],
+      "name": "学习",
+      "_syncId": "b4219734-cbc7-52cd-bc15-642f8a5ec32b"
+    },
+    {
+      "list": [
+        {
+          "title": "CSDN",
+          "url": "https://www.csdn.net/",
+          "_syncId": "0df9db39-ec01-57af-9d53-7d976874f32e"
+        },
+        {
+          "title": "博客园",
+          "url": "https://www.cnblogs.com/",
+          "_syncId": "8e06facc-1cfb-5655-ace8-4b7b5921ecc4"
+        },
+        {
+          "title": "开源中国",
+          "url": "https://www.oschina.net/",
+          "_syncId": "e6539f1d-fffb-5841-886f-4b233d19cdc4"
+        },
+        {
+          "title": "Gitee",
+          "url": "https://gitee.com/",
+          "_syncId": "9de696be-63aa-5fb4-aa88-d13bab1022ee"
+        },
+        {
+          "title": "IT之家",
+          "url": "https://www.ithome.com/",
+          "_syncId": "6f9bb97c-93df-5b90-a0cb-cb1a72efb2b2"
+        },
+        {
+          "title": "微信公众平台",
+          "url": "https://mp.weixin.qq.com/",
+          "_syncId": "815cc707-9a38-53a5-bfef-fc2089e6ec65"
+        }
+      ],
+      "name": "科技",
+      "_syncId": "9c5b5296-dd91-557e-94a0-d0eb0e4ea6cf"
+    },
+    {
+      "list": [
+        {
+          "title": "中国政府网",
+          "url": "https://www.gov.cn/",
+          "_syncId": "5856ef81-f4a0-5e6d-85ce-9c38add1e5e0"
+        },
+        {
+          "title": "国家政务服务平台",
+          "url": "https://gjzwfw.www.gov.cn/",
+          "_syncId": "3ba5f7f7-8660-5b85-a293-a257925d423b"
+        },
+        {
+          "title": "国家医保服务平台",
+          "url": "https://fuwu.nhsa.gov.cn/",
+          "_syncId": "cac8906b-b766-535a-bbae-c7068328921c"
+        },
+        {
+          "title": "东方财富",
+          "url": "https://www.eastmoney.com/",
+          "_syncId": "caf3c4e4-c247-587c-b352-b0b4bc84db4e"
+        },
+        {
+          "title": "同花顺",
+          "url": "https://www.10jqka.com.cn/",
+          "_syncId": "4165665b-59a0-5cc6-b358-656177f7b8dd"
+        },
+        {
+          "title": "雪球",
+          "url": "https://xueqiu.com/",
+          "_syncId": "4c99198c-a129-5a7e-ad18-9064ef00e6b0"
+        }
+      ],
+      "name": "政务财经",
+      "_syncId": "00551e0a-f432-565c-8cd7-1e73d02b9895"
+    },
+    {
+      "list": [
+        {
+          "title": "QQ邮箱",
+          "url": "https://mail.qq.com/",
+          "_syncId": "182e76cc-124d-594f-a936-8a874268cb99"
+        },
+        {
+          "title": "网易邮箱",
+          "url": "https://mail.163.com/",
+          "_syncId": "0d3cc4e5-c98c-5893-b32b-99629ff9dc7d"
+        },
+        {
+          "title": "支付宝",
+          "url": "https://www.alipay.com/",
+          "_syncId": "ce21f380-d67c-5397-a7a9-452dc89b7837"
+        },
+        {
+          "title": "中国天气网",
+          "url": "https://www.weather.com.cn/",
+          "_syncId": "44cd709c-c35c-5d9b-ad28-3df1c75d0059"
+        },
+        {
+          "title": "中国工商银行",
+          "url": "https://www.icbc.com.cn/",
+          "_syncId": "3a5ba779-85b2-5248-a2aa-ff18e09095e6"
+        },
+        {
+          "title": "招商银行",
+          "url": "https://www.cmbchina.com/",
+          "_syncId": "2a0bbb75-b66c-507e-ad21-414ab1c33418"
+        }
+      ],
+      "name": "常用服务",
+      "_syncId": "856a9231-8e4d-56fe-8f3d-5b3ddbe945ab"
     }
   ],
   "css": {
