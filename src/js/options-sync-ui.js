@@ -9,7 +9,7 @@
  const el=id=>document.getElementById(id);
  const state=async()=> (await chrome.storage.local.get('__astralSync')).__astralSync||{enabled:true,status:'pending'};
  let busy=false,desired=null,renderSerial=0,actionSerial=0;
- const descriptions={'preset-choice':'已载入默认配置。请选择本机上传或云端恢复。',off:'已关闭','waiting-cloud':'等待云端配置',pending:'待同步',syncing:'同步中…',synced:'已同步',error:'同步失败',conflict:'配置冲突'};
+ const descriptions={'preset-choice':'首次同步期间本机配置已修改。请选择本机上传或云端恢复。',off:'已关闭','waiting-cloud':'等待云端配置（本机默认配置已可用）',pending:'待同步',syncing:'同步中…',synced:'已同步',error:'同步失败',conflict:'配置冲突'};
  async function render(){
   const serial=++renderSerial,s=await state();if(serial!==renderSerial)return;
   const enabled=desired===null?!!s.enabled&&!s.userDisabled&&!s.importBlocked:desired;

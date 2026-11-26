@@ -93,7 +93,14 @@ const AstralSync = (() => {
     if (hash !== h.hash) throw Error('云端数据校验失败');
     const value = JSON.parse(text);
     if (!value || !value.data || !value.revisions) throw Error('云端格式错误');
-    return {head:h,...value,data:filter(value.data).data};
+    const d = value.data;
+    const plain = x => x !== null && typeof x === 'object' && !Array.isArray(x);
+    if (!plain(d) || !plain(d.config) || typeof d.config.title !== 'string' ||
+      typeof d.config.newTabOpen !== 'boolean' || !plain(d.css) || !Array.isArray(d.sites) ||
+      d.sites.some(g => !plain(g) || !Array.isArray(g.list) || g.list.some(site => !plain(site))))
+      throw Error('云端配置为空或不完整，已保留本机配置');
+    AstralSchema.validate(d);
+    return { head: h, ...value, data: filter(d).data };
   }
   // Reject a stale snapshot immediately before applying it to local storage.
   async function assertCurrentHead(incoming) {
@@ -128,14 +135,12 @@ const AstralSync = (() => {
       await remote.remove(stale);
     }
   }
-  // Write chunks first, then publish the head. Never delete the currently published
-  // generation to make room: a valid previous snapshot must survive failed uploads.
-  async function writeRemote(payload, modifiedAt = Date.now()) {
+
+  async function writeRemote(payload, modifiedAt = Date.now(), requireEmpty = false) {
     if (!(await state()).enabled) throw Error('当前设备同步已关闭');
     const generation = id(), text = serial(payload), parts = chunks(text, generation);
     const previous = (await remote.get(HEAD))[HEAD];
-    // Old generations otherwise accumulate forever and exhaust the 100 KB quota.
-    // Only the published generation (and this upload) must remain protected.
+    if (requireEmpty && previous) throw Error('云端配置已到达，等待自动恢复');
     await pruneStaleGenerations(previous, generation);
     const quota = remote.QUOTA_BYTES || 102400;
     const current = await remote.getBytesInUse(null);
@@ -201,7 +206,14 @@ const AstralSync = (() => {
       const localTime=Number(s.localModifiedAt)||0;
       const localHasSites=(ours.sites||[]).some(g=>(g.list||[]).length);
       const explicitEmptyEdit=!localHasSites && !!s.base && !equal(ours,s.base) && Number(s.localModifiedAt)>0;
+      const untouchedPreset = !!s.presetInstall && equal(ours, filter(await readPreset()).data);
       if(!incoming) {
+        if (untouchedPreset) {
+          // An empty Chrome Sync cache does not prove the cloud is empty.
+          // Keep the preset usable locally without publishing it automatically.
+          await save({ status: 'waiting-cloud', pending: false, error: null, nextRetry: null });
+          return;
+        }
         if(!localHasSites && !explicitEmptyEdit) {
           // A fresh install has neither local data nor a cloud snapshot yet.
           // Chrome Sync may still be initializing; never call this 'synced'.
@@ -209,12 +221,22 @@ const AstralSync = (() => {
           return;
         }
         const modifiedAt=localTime||Date.now();
-        const head=await writeRemote({data:ours,deleted:{},revisions:{device:s.deviceId||id()},createdAt:Date.now()},modifiedAt);
+        const head = await writeRemote({ data: ours, deleted: {}, revisions: { device: s.deviceId || id() }, createdAt: Date.now() }, modifiedAt, !!s.presetInstall);
         await settled({status:'synced',base:ours,deleted:{},lastHead:head.generation,pending:false,retry:0,lastSuccess:Date.now(),error:null,localModifiedAt:modifiedAt});
         return;
       }
       if (!incoming.data || !Array.isArray(incoming.data.sites) || !incoming.data.config || !incoming.data.css)
         throw Error('云端配置格式无效');
+      if (untouchedPreset) {
+        const remoteTime = Number(incoming.head.modifiedAt) || Number(incoming.head.updatedAt) || 0;
+        if (!equal(ours, incoming.data)) {
+          await local.set({ __astralSyncRecoveryBackup: { createdAt: Date.now(), data: original } });
+          await assertCurrentHead(incoming);
+          await apply(restoreLocalOnly(clone(incoming.data), original), original);
+        }
+        await settled({ status: 'synced', base: incoming.data, deleted: incoming.deleted || {}, lastHead: incoming.head.generation, pending: false, lastSuccess: Date.now(), error: null, lastSyncedModifiedAt: remoteTime, localModifiedAt: remoteTime });
+        return;
+      }
       if(s.presetInstall&&!equal(ours,incoming.data)){
         await save({status:'preset-choice',pending:false,error:null});
         return;
@@ -298,7 +320,8 @@ const AstralSync = (() => {
         throw Error('云端配置格式无效，已保留本机配置');
       const remoteHasSites=incoming.data.sites.some(g=>(g.list||[]).length);
       if (!choice) {
-        if (!localHasSites && remoteHasSites) choice='remote';
+        if (s.presetInstall && equal(ours, filter(await readPreset()).data)) choice = 'remote';
+        else if (!localHasSites && remoteHasSites) choice = 'remote';
         else if (equal(ours,incoming.data)) choice='same';
         else if (localHasSites && !remoteHasSites) choice='reconcile';
         else if (localHasSites && remoteHasSites) {
@@ -420,7 +443,7 @@ const AstralSync = (() => {
       const previous=await local.get([...KEYS,META,DEFAULTS_KEY]);
       if(!KEYS.some(key=>Object.hasOwn(previous,key))){
         const preset=await readPreset();
-        const enabled=preset.config.syncEnabled ?? true;
+        const enabled = true;
         delete preset.config.syncEnabled;
         await local.set({...preset,[DEFAULTS_KEY]:DEFAULTS_REVISION,
           [META]:{enabled,userDisabled:!enabled,presetInstall:enabled,pending:false,status:enabled?'pending':'off',deviceId:id()}});
@@ -453,6 +476,7 @@ const AstralSync = (() => {
     const s=await state();if(!s.enabled)return;
     const actual=filter(await getData()).data;
     if(s.status==='waiting-cloud'&&!actual.sites.some(g=>(g.list||[]).length))return;
+    if (s.presetInstall && equal(actual, filter(await readPreset()).data)) return;
     // Generated caches, normalization and ID bookkeeping are not user edits.
     if(s.base&&equal(actual,s.base)){
       if(s.status==='pending')await save({pending:false,status:'synced',error:null});

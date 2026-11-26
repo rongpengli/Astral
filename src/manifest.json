@@ -30,7 +30,7 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; frame-src 'none';"
   },
-  "version": "1.12.8",
+  "version": "1.12.9",
   "background": {
     "service_worker": "background.js"
   },
