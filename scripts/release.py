@@ -89,14 +89,54 @@ def as_json(resp):
     except ValueError:
         raise RuntimeError(f'Expected JSON from {resp.url}: {resp.text[:500]}')
 
+
 def chrome_token():
-    resp = request('POST', 'https://oauth2.googleapis.com/token', data={
-        'client_id': required('CHROME_CLIENT_ID'),
-        'client_secret': required('CHROME_CLIENT_SECRET'),
-        'refresh_token': required('CHROME_REFRESH_TOKEN'),
-        'grant_type': 'refresh_token',
-    })
-    return as_json(resp)['access_token']
+    """Obtain Chrome Web Store API token using a service account."""
+    from google.oauth2 import service_account
+    from google.auth.transport.requests import Request
+
+    try:
+        info = json.loads(
+            required('CHROME_SERVICE_ACCOUNT_JSON')
+        )
+
+        if info.get('type') != 'service_account':
+            raise RuntimeError(
+                'Invalid Google service account JSON'
+            )
+
+        credentials = (
+            service_account.Credentials
+            .from_service_account_info(
+                info,
+                scopes=[
+                    'https://www.googleapis.com/auth/chromewebstore'
+                ],
+            )
+        )
+
+        credentials.refresh(Request())
+
+        if not credentials.token:
+            raise RuntimeError(
+                'Google returned an empty access token'
+            )
+
+        print(
+            'Chrome authentication: Service Account'
+            f' ({info.get("client_email", "unknown")})',
+            flush=True
+        )
+
+        return credentials.token
+
+    except RuntimeError:
+        raise
+    except Exception as exc:
+        raise RuntimeError(
+            f'Google Service Account authentication failed: {exc}'
+        ) from exc
+
 
 def chrome(package, upload_only):
     version = package_info(package)
