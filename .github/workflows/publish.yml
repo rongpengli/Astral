@@ -1,3 +1,4 @@
+
 name: Publish browser extension
 
 on:
@@ -7,6 +8,7 @@ on:
         description: "Expected manifest version"
         required: true
         type: string
+
       target:
         description: "Publishing target"
         required: true
@@ -16,8 +18,10 @@ on:
           - both
           - chrome
           - edge
+          - release
+
       upload_only:
-        description: "Upload without submitting for review"
+        description: "Upload without submitting for review (ignored for release-only)"
         required: true
         default: false
         type: boolean
@@ -30,6 +34,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # ============================================================
+  # Build shared extension package
+  # ============================================================
   build:
     name: Validate and build
     runs-on: ubuntu-latest
@@ -106,6 +113,9 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  # ============================================================
+  # Publish Chrome Web Store
+  # ============================================================
   publish-chrome:
     name: Publish Chrome Web Store
     needs: build
@@ -155,6 +165,9 @@ jobs:
             --package "release-artifact/astral-${EXPECTED_VERSION}.zip" \
             "${args[@]}"
 
+  # ============================================================
+  # Publish Microsoft Edge Add-ons
+  # ============================================================
   publish-edge:
     name: Publish Microsoft Edge Add-ons
     needs: build
@@ -204,6 +217,15 @@ jobs:
             --package "release-artifact/astral-${EXPECTED_VERSION}.zip" \
             "${args[@]}"
 
+  # ============================================================
+  # Create GitHub Release
+  #
+  # Modes:
+  #   release: create GitHub Release only
+  #   both: create GitHub Release after Chrome and Edge succeed
+  #
+  # Chrome-only / Edge-only: skip GitHub Release
+  # ============================================================
   release:
     name: Create GitHub Release
 
@@ -216,11 +238,16 @@ jobs:
       ${{
         always() &&
         github.ref == 'refs/heads/master' &&
-        inputs.target == 'both' &&
-        inputs.upload_only == false &&
         needs.build.result == 'success' &&
-        needs.publish-chrome.result == 'success' &&
-        needs.publish-edge.result == 'success'
+        (
+          inputs.target == 'release' ||
+          (
+            inputs.target == 'both' &&
+            inputs.upload_only == false &&
+            needs.publish-chrome.result == 'success' &&
+            needs.publish-edge.result == 'success'
+          )
+        )
       }}
 
     runs-on: ubuntu-latest
@@ -244,6 +271,17 @@ jobs:
         with:
           name: extension-package
           path: release-artifact
+
+      - name: Verify package and checksum
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          cd release-artifact
+
+          test -f "astral-${VERSION}.zip"
+          test -f SHA256SUMS.txt
+
+          sha256sum -c SHA256SUMS.txt
 
       - name: Check existing release
         env:
@@ -291,13 +329,22 @@ jobs:
         env:
           VERSION: ${{ needs.build.outputs.version }}
           TAG: ${{ needs.build.outputs.tag }}
+          TARGET: ${{ inputs.target }}
         run: |
           {
             echo "## Astral ${VERSION}"
             echo ""
             echo "- Release title: ${VERSION}"
             echo "- Git tag: ${TAG}"
-            echo "- Chrome: submitted"
-            echo "- Edge: submitted"
+
+            if [[ "$TARGET" == "release" ]]; then
+              echo "- Publishing mode: GitHub Release only"
+              echo "- Chrome: not run"
+              echo "- Edge: not run"
+            else
+              echo "- Chrome: submitted"
+              echo "- Edge: submitted"
+            fi
+
             echo "- Release notes: Git diff + module detection"
           } >> "$GITHUB_STEP_SUMMARY"
