@@ -12,13 +12,13 @@ on:
       target:
         description: "Publishing target"
         required: true
-        default: both
+        default: all
         type: choice
         options:
-          - both
+          - all
           - chrome
           - edge
-          - release
+          - github-release
 
       upload_only:
         description: "Upload without submitting for review (ignored for release-only)"
@@ -122,7 +122,7 @@ jobs:
 
     if: >-
       ${{
-        inputs.target == 'both' ||
+        inputs.target == 'all' ||
         inputs.target == 'chrome'
       }}
 
@@ -174,7 +174,7 @@ jobs:
 
     if: >-
       ${{
-        inputs.target == 'both' ||
+        inputs.target == 'all' ||
         inputs.target == 'edge'
       }}
 
@@ -221,12 +221,12 @@ jobs:
   # Create GitHub Release
   #
   # Modes:
-  #   release: create GitHub Release only
-  #   both: create GitHub Release after Chrome and Edge succeed
+  #   github-release: create GitHub Release only
+  #   all: create GitHub Release after Chrome and Edge succeed
   #
   # Chrome-only / Edge-only: skip GitHub Release
   # ============================================================
-  release:
+  github-release:
     name: Create GitHub Release
 
     needs:
@@ -242,7 +242,7 @@ jobs:
         (
           inputs.target == 'release' ||
           (
-            inputs.target == 'both' &&
+            inputs.target == 'all' &&
             inputs.upload_only == false &&
             needs.publish-chrome.result == 'success' &&
             needs.publish-edge.result == 'success'
